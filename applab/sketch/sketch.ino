@@ -99,7 +99,8 @@ bool radioSend(const uint8_t *buf, size_t len) {
 }
 
 uint32_t minutesSinceHeartbeat(unsigned long now) {
-  return everHeard ? (now - lastHeartbeatMs) / 60000UL : 65535;
+  unsigned long heard = lastHeartbeatMs;
+  return !everHeard ? 65535 : heard > now ? 0 : (now - heard) / 60000UL;
 }
 
 void transmit(uint8_t type, uint8_t flags, uint32_t sinceHeartbeatMin) {
@@ -183,13 +184,17 @@ void loop() {
     last = incoming;
     transmit(TYPE_SUMMARY, FLAG_LINUX_OK, 0);
   }
-  unsigned long silentFor = now - (everHeard ? lastHeartbeatMs : 0);
-  if (!linuxDown && silentFor > (everHeard ? LINUX_DOWN_MS : BOOT_GRACE_MS)) {
+  // Read the heartbeat time before millis(): the handler thread or transmit()
+  // may have set a time later than `now`, and the unsigned subtraction would wrap.
+  unsigned long heard = everHeard ? lastHeartbeatMs : 0;
+  unsigned long t = millis();
+  if (!linuxDown && t - heard > (everHeard ? LINUX_DOWN_MS : BOOT_GRACE_MS)) {
     linuxDown = true;
-    transmit(TYPE_LINUX_DOWN, 0, minutesSinceHeartbeat(now));
+    transmit(TYPE_LINUX_DOWN, 0, minutesSinceHeartbeat(t));
   }
-  if (now - txAt >= HEARTBEAT_TX_MS)
-    transmit(TYPE_HEARTBEAT, linuxDown ? 0 : FLAG_LINUX_OK, minutesSinceHeartbeat(now));
+  t = millis();
+  if (t - txAt >= HEARTBEAT_TX_MS)
+    transmit(TYPE_HEARTBEAT, linuxDown ? 0 : FLAG_LINUX_OK, minutesSinceHeartbeat(t));
   if (txShown && now - txAt >= TX_ICON_MS) txShown = false;
   render();
 }
