@@ -1,0 +1,5 @@
+name: SuoKuulo
+icon: 🐦
+description: On-device bioacoustic monitor for restored peatlands. BirdNET on the USB mic, health score on the LED matrix, alarm on the Modulino Buzzer, dashboard on the WebUI.
+bricks:
+  - arduino:web_ui

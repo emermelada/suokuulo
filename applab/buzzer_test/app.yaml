@@ -1,0 +1,3 @@
+name: SuoKuulo Buzzer Test
+icon: 🔔
+description: Plays startup beep, chirp, double chirp and siren in a loop on the Modulino Buzzer (Qwiic). Matrix shows an X if the buzzer is not found.

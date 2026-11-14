@@ -1,0 +1,8 @@
+# UNO Q, loaded by applab/python/main.py.
+source: applab        # App Lab Microphone peripheral; "file" with input: ... replays clips instead
+device: null          # null = Microphone.USB_MIC_1 (first USB mic)
+classifier: birdnet
+min_conf: 0.1
+log_file: events.csv  # relative to the app folder on the board
+web_port: 7000        # App Lab WebUI brick port (brick_config.yaml declares 7000)
+mute: false
