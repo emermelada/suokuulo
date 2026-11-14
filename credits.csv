@@ -69,6 +69,7 @@ test_clips/engine/ESC50-1-61261-A-44.wav,engine,ESC-50 (CC BY-NC 3.0),Hybrid34,C
 test_clips/engine/ESC50-1-62565-A-44.wav,engine,ESC-50 (CC BY-NC 3.0),lonemonk,CC-BY,http://www.freesound.org/people/lonemonk/sounds/62565/
 test_clips/engine/ESC50-2-106014-A-44.wav,engine,ESC-50 (CC BY-NC 3.0),Corsica_S,CC-BY,http://www.freesound.org/people/Corsica_S/sounds/106014/
 test_clips/engine/ESC50-2-106015-A-44.wav,engine,ESC-50 (CC BY-NC 3.0),Corsica_S,CC-BY,http://www.freesound.org/people/Corsica_S/sounds/106015/
+test_clips/golden_plover/XC1168500.wav,golden_plover,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168500
 test_clips/golden_plover/XC1168590.wav,golden_plover,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168590
 test_clips/golden_plover/XC1168646.wav,golden_plover,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168646
 test_clips/golden_plover/XC1176147.wav,golden_plover,xeno-canto,Frank Wagenaar,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1176147
@@ -79,6 +80,16 @@ test_clips/golden_plover/XC1193422.wav,golden_plover,xeno-canto,Lionel FREDERIC,
 test_clips/golden_plover/XC1193790.wav,golden_plover,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1193790
 test_clips/golden_plover/XC1193791.wav,golden_plover,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1193791
 test_clips/golden_plover/XC1194212.wav,golden_plover,xeno-canto,Lionel FREDERIC,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1194212
+test_clips/human_voice/LIBRISPEECH-1673-143396-0013.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 1673",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-1993-147964-0007.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 1993",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-2277-149896-0000.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 2277",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-2428-83699-0013.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 2428",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-2803-154328-0011.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 2803",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-3081-166546-0046.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 3081",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-5694-64038-0007.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 5694",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-6295-244435-0030.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 6295",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-652-130726-0010.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 652",CC BY 4.0,https://www.openslr.org/12
+test_clips/human_voice/LIBRISPEECH-7976-105575-0017.flac,human_voice,LibriSpeech dev-clean (CC BY 4.0),"LibriVox reader, speaker 7976",CC BY 4.0,https://www.openslr.org/12
 test_clips/meadow_pipit/XC1143357.wav,meadow_pipit,xeno-canto,David Darrell-Lambert,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1143357
 test_clips/meadow_pipit/XC1149199.wav,meadow_pipit,xeno-canto,Aku Kalliomäki,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1149199
 test_clips/meadow_pipit/XC1155665.wav,meadow_pipit,xeno-canto,Ulf Elman,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1155665

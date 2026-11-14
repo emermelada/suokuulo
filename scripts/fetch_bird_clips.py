@@ -2,7 +2,10 @@
 
 Xeno-canto API v3 needs a personal key (https://xeno-canto.org/account).
 Never commit it. Usage:
-    XC_API_KEY=... python scripts/fetch_bird_clips.py [--per-species 10]
+    XC_API_KEY=... python scripts/fetch_bird_clips.py [--per-species 10] [--ids 1168500 ...]
+
+--ids adds specific recordings (e.g. one played in a live test) to their
+species folder, on top of the per-species picks.
 """
 import argparse
 import csv
@@ -41,8 +44,8 @@ def get(url, headers=None):
         return r.read()
 
 
-def search(sci, extra, key):
-    q = urllib.parse.urlencode({"query": f'sp:"{sci}" {extra}', "key": key})
+def search(query, key):
+    q = urllib.parse.urlencode({"query": query, "key": key})
     return json.loads(get(f"{API}?{q}"))["recordings"]
 
 
@@ -50,6 +53,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--per-species", type=int, default=10)
     ap.add_argument("--species", default="config/species.yaml")
+    ap.add_argument("--ids", nargs="*", default=[], help="extra Xeno-canto catalogue numbers")
     args = ap.parse_args()
     key = os.environ.get("XC_API_KEY") or sys.exit("set XC_API_KEY (https://xeno-canto.org/account)")
 
@@ -59,11 +63,14 @@ def main():
         sci = s.label.split("_")[0]
         picked = {}
         for extra in QUERIES:
-            for r in search(sci, extra, key):
+            for r in search(f'sp:"{sci}" {extra}', key):
                 if len(picked) < args.per_species and r["id"] not in picked:
                     picked[r["id"]] = r
             if len(picked) >= args.per_species:
                 break
+        for nr in args.ids:
+            picked.update({r["id"]: r for r in search(f"nr:{nr.removeprefix('XC')}", key)
+                           if f"{r['gen']} {r['sp']}" == sci})
         out = Path("test_clips") / s.id
         out.mkdir(parents=True, exist_ok=True)
         rows = []

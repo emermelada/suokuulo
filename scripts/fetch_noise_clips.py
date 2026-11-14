@@ -12,7 +12,13 @@ HF_TOKEN (https://huggingface.co/settings/tokens). Never commit it.
     chainsaw    -> test_clips/power_tools/
     environment -> test_clips/background/
 
-Usage: python scripts/fetch_noise_clips.py [--per-class 10] [--frugalai 20]
+--speech: read speech from LibriSpeech dev-clean (CC BY 4.0, openslr.org/12)
+via the public openslr/librispeech_asr dataset, rows spread over the split so
+each clip is a different speaker. For the human_voice label and the bird+speech
+mix in tests and scripts/evaluate.py --mix.
+    speech      -> test_clips/human_voice/
+
+Usage: python scripts/fetch_noise_clips.py [--per-class 10] [--frugalai 20] [--speech 10]
 """
 import argparse
 import csv
@@ -79,14 +85,35 @@ def fetch_frugalai(n):
         print(f"frugalai class {class_id} -> {label:12s} {len(rows):2d} clips")
 
 
+def fetch_speech(n, rows_in_split=2703):
+    out = Path("test_clips/human_voice")
+    out.mkdir(parents=True, exist_ok=True)
+    credits = []
+    for offset in range(0, rows_in_split, rows_in_split // n)[:n]:
+        q = urllib.parse.urlencode({"dataset": "openslr/librispeech_asr", "config": "clean", "split": "validation",
+                                    "offset": offset, "length": 1})
+        row = json.loads(get(f"https://datasets-server.huggingface.co/rows?{q}"))["rows"][0]["row"]
+        path = out / f"LIBRISPEECH-{row['id']}.flac"
+        if not path.exists():
+            path.write_bytes(get(row["audio"][0]["src"]))
+        credits.append({"file": str(path), "label": "human_voice", "source": "LibriSpeech dev-clean (CC BY 4.0)",
+                        "recordist": f"LibriVox reader, speaker {row['speaker_id']}", "licence": "CC BY 4.0",
+                        "url": "https://www.openslr.org/12"})
+    update_credits(credits)
+    print(f"LibriSpeech speech -> human_voice  {len(credits):2d} clips")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--per-class", type=int, default=10, help="ESC-50 clips per class")
     ap.add_argument("--frugalai", type=int, default=0, metavar="N", help="also fetch N rfcx/frugalai clips per label")
+    ap.add_argument("--speech", type=int, default=0, metavar="N", help="also fetch N LibriSpeech speech clips")
     args = ap.parse_args()
     fetch_esc50(args.per_class)
     if args.frugalai:
         fetch_frugalai(args.frugalai)
+    if args.speech:
+        fetch_speech(args.speech)
 
 
 if __name__ == "__main__":
