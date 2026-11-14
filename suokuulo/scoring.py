@@ -241,8 +241,15 @@ class Soundscape:
             return {"time": iso(e), "label": e[1], "name": names.get(e[1], e[1]), "kind": e[2],
                     "group": self.group.get(e[1], ""), "confidence": round(e[3], 2)}
 
+        birds_today = [e for e in today if e[2] == "indicator"]
+        heard = {r["id"] for r in rows if r["detections_today"]}
+        summary = {"species_heard": len(heard), "expected": len(h["expected"]),
+                   "expected_heard": len(heard & set(h["expected"])), "detections": len(birds_today),
+                   "first": iso(birds_today[0] if birds_today else None),
+                   "last": iso(birds_today[-1] if birds_today else None),
+                   "hourly": [sum(r["hourly"][i] for r in rows) for i in range(24)]}
         snap = {"health": {k: v for k, v in h.items() if k not in ("observed", "expected")},
-                "species": rows, "acoustic_index": self.acoustic_index(),
+                "today": summary, "species": rows, "acoustic_index": self.acoustic_index(),
                 "events": [entry(e) for e in self.events[-20:][::-1]]}
         if self.cfg.disturbance_enabled:
             snap["disturbance"] = self.disturbance(t, midnight, iso, entry)

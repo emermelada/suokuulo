@@ -52,8 +52,9 @@
      the window (muted), not heard today (greyed). */
   tr.today td, tr.today .sp-name i { color: var(--dim); }
   tr.none td, tr.none .sp-name i, tr.none .tag { color: var(--faint); }
-  .tag { font-size: .75rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+  .tag { display: inline-block; white-space: nowrap; font-size: .75rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
   .spark { display: block; }
+  .kv td { padding: 6px 0; }
   /* Acoustic index */
   .index-value { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
   .index-value b { font-size: 1.6rem; }
@@ -101,6 +102,17 @@
         <p class="facts" id="facts"></p>
       </div>
     </div>
+  </section>
+  <section class="card" aria-labelledby="h-today">
+    <h2 id="h-today">Today</h2>
+    <div class="index-value"><b class="num" id="t-species">--</b><span class="empty" id="t-species-word"></span></div>
+    <table class="kv">
+      <tr><td>Detections</td><td class="n num" id="t-det">--</td></tr>
+      <tr><td>First detection</td><td class="n num" id="t-first">--</td></tr>
+      <tr><td>Last detection</td><td class="n num" id="t-last">--</td></tr>
+    </table>
+    <p class="facts" style="margin-top:12px">Detection-minutes per hour, all species, last 24 h</p>
+    <div id="t-strip"></div>
   </section>
   <section class="card wide" aria-labelledby="h-species">
     <h2 id="h-species">Indicator species</h2>
@@ -170,6 +182,21 @@ function render(s) {
   $("facts").textContent = !h.profile ? "" : h.off_season
     ? `${h.label}. Profile: ${h.profile}: few indicator birds are expected now, so no health number.`
     : `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min`;
+
+  const td = s.today || {};
+  $("t-species").textContent = td.expected ? `${td.expected_heard} / ${td.expected}` : `${td.species_heard ?? "--"}`;
+  $("t-species-word").textContent = td.expected
+    ? `expected species heard${td.species_heard > td.expected_heard ? ` (+${td.species_heard - td.expected_heard} other)` : ""}`
+    : "species heard";
+  $("t-det").textContent = td.detections ?? "--";
+  $("t-first").textContent = hhmm(td.first);
+  $("t-last").textContent = hhmm(td.last);
+  const tmax = Math.max(5, ...(td.hourly || [0]));
+  $("t-strip").innerHTML = td.hourly ? `<svg width="100%" height="32" viewBox="0 0 240 32" preserveAspectRatio="none"
+    role="img" aria-label="detection-minutes per hour, last 24 hours">` + td.hourly.map((v, i) => {
+      const bh = v ? Math.max(2, Math.round(v / tmax * 30)) : 1;
+      return `<rect x="${i * 10}" y="${32 - bh}" width="8" height="${bh}" fill="${v ? "var(--accent)" : "var(--line)"}"/>`;
+    }).join("") + "</svg>" : "";
 
   $("species").innerHTML = (s.species || []).map(r => {
     const cls = r.heard_in_window ? "" : r.detections_today ? "today" : "none";

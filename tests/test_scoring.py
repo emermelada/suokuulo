@@ -186,3 +186,14 @@ def test_active_species_leaves_out_disturbance_unless_enabled():
     assert {s.kind for s in config.active_species(c)} == {"indicator"}
     c.disturbance_enabled = True
     assert "human_voice" in {s.id for s in config.active_species(c)}
+
+
+def test_today_summary():
+    clock = Clock(at(2026, 6, 10, 5, 0))
+    s = soundscape(clock, baseline_profile="breeding", score_window_min=10)
+    s.update([bird()])
+    clock.t += 120
+    s.update([bird("curlew"), bird("willow_ptarmigan")])  # ptarmigan is not expected in breeding
+    today = s.snapshot()["today"]
+    assert (today["species_heard"], today["expected_heard"], today["expected"], today["detections"]) == (3, 2, 8, 3)
+    assert (today["first"][11:16], today["last"][11:16]) == ("05:00", "05:02") and sum(today["hourly"]) == 3
