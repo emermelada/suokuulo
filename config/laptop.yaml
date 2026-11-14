@@ -1,0 +1,7 @@
+# Laptop: replay files from test_clips/. Override with --input, --mic, --mock.
+source: file
+input: test_clips
+classifier: birdnet
+min_conf: 0.1
+log_file: events.csv
+web_port: 8000

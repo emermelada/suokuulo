@@ -1,0 +1,13 @@
+species:
+  - {id: golden_plover,  label: TBD, kind: indicator, weight: 3}
+  - {id: wood_sandpiper, label: TBD, kind: indicator, weight: 1}
+  - {id: common_snipe,   label: TBD, kind: indicator, weight: 1}
+  - {id: curlew,         label: TBD, kind: indicator, weight: 1}
+  - {id: whimbrel,       label: TBD, kind: indicator, weight: 1}
+  - {id: meadow_pipit,   label: TBD, kind: indicator, weight: 1}
+  - {id: yellow_wagtail, label: TBD, kind: indicator, weight: 1}
+  - {id: common_crane,   label: TBD, kind: indicator, weight: 1}
+  - {id: engine,         label: TBD, kind: disturbance}
+  - {id: power_tools,    label: TBD, kind: disturbance}
+  - {id: gun,            label: TBD, kind: disturbance}
+  - {id: human_voice,    label: TBD, kind: disturbance}
