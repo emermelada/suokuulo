@@ -25,6 +25,21 @@ def split_windows(y: np.ndarray) -> Iterator[np.ndarray]:
         yield w
 
 
+def resample(y: np.ndarray, rate: int) -> np.ndarray:
+    """To 48 kHz with soxr (what librosa uses inside, without librosa's ~70 MB of imports)."""
+    if rate == SAMPLE_RATE:
+        return y
+    import soxr
+    return soxr.resample(y, rate, SAMPLE_RATE)
+
+
+def load_audio(path) -> np.ndarray:
+    """WAV/FLAC/OGG/MP3 (libsndfile) as 48 kHz mono float32."""
+    import soundfile as sf
+    y, rate = sf.read(path, dtype="float32", always_2d=True)
+    return resample(y.mean(axis=1), rate)
+
+
 def audio_files(folder_or_file) -> list[Path]:
     p = Path(folder_or_file)
     if p.is_file():
@@ -42,12 +57,10 @@ class FileSource:
         self.loop, self.realtime = loop, realtime
 
     def windows(self):
-        import librosa  # heavy import, only needed for files
         next_t = time.monotonic()
         while True:
             for f in self.files:
-                y, _ = librosa.load(f, sr=SAMPLE_RATE, mono=True)
-                for w in split_windows(y):
+                for w in split_windows(load_audio(f)):
                     if self.realtime:  # pace like a live mic: one window per 3 s
                         next_t += WINDOW / SAMPLE_RATE
                         time.sleep(max(0.0, next_t - time.monotonic()))

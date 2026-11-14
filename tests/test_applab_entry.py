@@ -13,15 +13,16 @@ ROOT = Path(__file__).resolve().parents[1]
 CLIP = ROOT / "test_clips/golden_plover/XC1193791.wav"
 
 
-def fake_arduino(calls, api):
-    import librosa
-    audio, _ = librosa.load(CLIP, sr=48000, mono=True)
+def fake_arduino(calls, api, rate):
+    import soxr
+    from suokuulo.audio import load_audio
+    audio = soxr.resample(load_audio(CLIP), 48000, rate)
 
     class Microphone:
         USB_MIC_1 = "usb:1"
 
         def __init__(self, device, sample_rate, channels, format):
-            self.name, self.sample_rate = device, sample_rate
+            self.name, self.sample_rate = device, rate  # a real mic may ignore the request
 
         def start(self):
             pass
@@ -57,9 +58,10 @@ def fake_arduino(calls, api):
 
 
 @pytest.mark.skipif(not CLIP.exists(), reason="run scripts/fetch_bird_clips.py first")
-def test_board_entrypoint_wiring(monkeypatch, tmp_path):
+@pytest.mark.parametrize("rate", [48000, 44100])
+def test_board_entrypoint_wiring(monkeypatch, rate):
     calls, api = [], {}
-    for name, mod in fake_arduino(calls, api).items():
+    for name, mod in fake_arduino(calls, api, rate).items():
         monkeypatch.setitem(sys.modules, name, mod)
     log = ROOT / "applab/events.csv"
     try:

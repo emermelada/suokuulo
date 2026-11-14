@@ -40,7 +40,7 @@ local dashboard. No audio and no data leave the device.
  USB mic ──> [ Linux side (Python, App Lab container) ]                      [ MCU side (Zephyr sketch) ]
              AppLabMicSource ─ 3 s windows                                     LED matrix 8x13
                   │                                                              - score bar (bottom 2 rows)
-             BirdNetClassifier (birdnetlib + ai-edge-litert, BirdNET v2.4)       - bird icon 3 s
+             BirdNetClassifier (BirdNET v2.4 TFLite, ai-edge-litert)            - bird icon 3 s
                   │  Detection(label, kind, confidence)                          - 2 Hz blink on alarm
              Smoother (2 of 3, cooldown) ── events ──> ScoreEngine ──┐          Modulino Buzzer (Qwiic, Wire1)
                                                                      │            - chirp / double chirp
@@ -96,7 +96,7 @@ YAMNet beside BirdNET (README).
 
 - BirdNET (K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of
   Ornithology, and Chemnitz University of Technology), model v2.4.
-- birdnetlib (Joe Weiss) for the Python wrapper.
+- birdnetlib (Joe Weiss), whose package ships the model files we load.
 - Test recordings: Xeno-canto recordists, ESC-50 (Karol Piczak) and its
   Freesound contributors, Rainforest Connection (rfcx/frugalai). Every clip is
   listed with recordist, licence and URL in `credits.csv`.

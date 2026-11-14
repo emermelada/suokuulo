@@ -1,9 +1,8 @@
-# Board: Python 3.13 aarch64 (app-bricks-py python-base image). All of these
-# resolve to binary aarch64 cp313 wheels (checked with uv pip compile
-# --python-platform aarch64-manylinux_2_28 --only-binary :all:).
-# numpy and pyyaml come from the base image.
-birdnetlib==0.18.1
-ai-edge-litert==2.3.0
-librosa==1.0.1
-audioread==3.1.0
-matplotlib==3.11.2
+# Board: Python 3.13 aarch64 (app-bricks-py python-base image). All resolve to
+# binary aarch64 cp313 wheels (uv pip compile --python-platform
+# aarch64-manylinux_2_28 --only-binary :all:). numpy and pyyaml come from the
+# base image.
+birdnetlib==0.18.1      # only for the BirdNET v2.4 model + labels files; never imported
+ai-edge-litert==2.3.0   # TFLite runtime
+soundfile==0.14.0       # file replay (source: file)
+soxr==1.1.0             # resampling if the mic is not 48 kHz

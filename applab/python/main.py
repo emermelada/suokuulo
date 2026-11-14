@@ -60,14 +60,16 @@ class AppLabMicSource:
         mic.start()
         rate = mic.sample_rate  # TODO(hardware): confirm the USB mic really opens at 48 kHz
         print(f"[mic] {mic.name} at {rate} Hz")
-        need, buf = 3 * rate, np.zeros(0, np.float32)
+        resampler = None
+        if rate != SAMPLE_RATE:  # streaming, so no clicks at chunk edges
+            import soxr
+            resampler = soxr.ResampleStream(rate, SAMPLE_RATE, 1, dtype="float32")
+        buf = np.zeros(0, np.float32)
         for chunk in mic.stream():
-            buf = np.concatenate([buf, chunk.reshape(-1).astype(np.float32)])
-            while len(buf) >= need:
-                w, buf = buf[:need], buf[need:]
-                if rate != SAMPLE_RATE:
-                    import librosa
-                    w = librosa.resample(w, orig_sr=rate, target_sr=SAMPLE_RATE)[:WINDOW]
+            x = chunk.reshape(-1).astype(np.float32)
+            buf = np.concatenate([buf, resampler.resample_chunk(x) if resampler else x])
+            while len(buf) >= WINDOW:
+                w, buf = buf[:WINDOW], buf[WINDOW:]
                 yield w
 
 

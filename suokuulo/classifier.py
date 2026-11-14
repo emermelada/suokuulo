@@ -1,9 +1,7 @@
-import io
-import sys
+import importlib.util
 import time
-import types
-from contextlib import redirect_stdout
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 import numpy as np
@@ -31,46 +29,42 @@ class MockClassifier:
         return [Detection(l, self.kind[l], c) for l, c in next(self.script, [])]
 
 
-def _alias_litert():
-    """birdnetlib imports tflite_runtime, else tensorflow. tflite-runtime has no
-    wheels past Python 3.11; ai-edge-litert is its official successor with the
-    same Interpreter API and wheels for cp310-cp314 on x86_64 and aarch64."""
-    try:
-        import tflite_runtime.interpreter  # noqa: F401
-        return
-    except ImportError:
-        pass
-    try:
-        import ai_edge_litert.interpreter as litert
-    except ImportError:
-        return  # birdnetlib falls back to tensorflow
-    pkg = types.ModuleType("tflite_runtime")
-    pkg.interpreter = litert
-    sys.modules["tflite_runtime"] = pkg
-    sys.modules["tflite_runtime.interpreter"] = litert
-
-
 class BirdNetClassifier:
-    """BirdNET v2.4 via birdnetlib. No lat/lon/date: species list filter only."""
+    """BirdNET v2.4 TFLite model run directly with ai-edge-litert.
+
+    Model and labels are the files shipped in the birdnetlib package, but
+    birdnetlib itself is not imported: it would load librosa, matplotlib and a
+    second (location) model, ~95 MB of RAM we never use. Same maths as
+    birdnetlib's Analyzer: sigmoid(clip(logit, -15, 15)). No lat/lon/date
+    filter, only our species list.
+    """
 
     def __init__(self, species, min_conf=0.1):
-        t0 = time.perf_counter()  # includes imports: librosa + runtime are most of the startup cost
-        _alias_litert()
-        from birdnetlib import RecordingBuffer
-        from birdnetlib.analyzer import Analyzer
-        self.RecordingBuffer, self.min_conf = RecordingBuffer, min_conf
-        self.by_label = {s.label: s for s in species}
-        with redirect_stdout(io.StringIO()):  # birdnetlib prints on every call
-            self.analyzer = Analyzer(custom_species_list=list(self.by_label))
-        self.load_s = time.perf_counter() - t0
-        missing = set(self.by_label) - set(self.analyzer.labels)
+        t0 = time.perf_counter()
+        try:
+            from ai_edge_litert.interpreter import Interpreter
+        except ImportError:  # same API, older Pythons
+            from tflite_runtime.interpreter import Interpreter
+        models = Path(importlib.util.find_spec("birdnetlib").submodule_search_locations[0]) / "models/analyzer"
+        labels = (models / "BirdNET_GLOBAL_6K_V2.4_Labels.txt").read_text().splitlines()
+        missing = sorted({s.label for s in species} - set(labels))
         if missing:
-            raise ValueError(f"labels not in model, fix species.yaml: {sorted(missing)}")
+            raise ValueError(f"labels not in model, fix species.yaml: {missing}")
+        self.interpreter = Interpreter(model_path=str(models / "BirdNET_GLOBAL_6K_V2.4_Model_FP32.tflite"),
+                                       num_threads=1)
+        self.interpreter.allocate_tensors()
+        self.input = self.interpreter.get_input_details()[0]["index"]    # [1, 144000]
+        self.output = self.interpreter.get_output_details()[0]["index"]  # [1, 6522] logits
+        self.species, self.min_conf = species, min_conf
+        self.columns = np.array([labels.index(s.label) for s in species])
+        self.load_s = time.perf_counter() - t0
         print(f"[birdnet] imports + model load {self.load_s:.2f} s")
 
     def classify(self, window, sample_rate):
-        rec = self.RecordingBuffer(self.analyzer, window, sample_rate, min_conf=self.min_conf)
-        with redirect_stdout(io.StringIO()):
-            rec.analyze()
-        return [Detection(s.id, s.kind, d["confidence"])
-                for d in rec.detections if (s := self.by_label.get(d["label"]))]
+        if sample_rate != 48000 or window.shape != (144000,):
+            raise ValueError(f"BirdNET needs 3 s at 48 kHz, got {window.shape} at {sample_rate} Hz")
+        self.interpreter.set_tensor(self.input, window.astype(np.float32, copy=False)[None])
+        self.interpreter.invoke()
+        logits = self.interpreter.get_tensor(self.output)[0, self.columns]
+        conf = 1 / (1 + np.exp(-np.clip(logits, -15, 15)))
+        return [Detection(s.id, s.kind, float(c)) for s, c in zip(self.species, conf) if c > self.min_conf]
