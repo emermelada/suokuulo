@@ -157,3 +157,9 @@ def test_every_label_in_a_window_is_judged_on_its_own():
     s = Smoother(Config(), clock)
     window = [bird(), bird("curlew", 0.6), noise("human_voice", 0.5)]
     assert set(feed(s, clock, [window, window])[1]) == {"golden_plover", "curlew", "human_voice"}
+
+
+def test_per_label_single_window_override():
+    clock = Clock()
+    s = Smoother(Config(hit_window=2, confirm_single=0.70, species_single={"golden_plover": 0.85}), clock)
+    assert feed(s, clock, [[bird(c=0.8), bird("curlew", 0.8)]]) == [["curlew"]]

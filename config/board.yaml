@@ -17,6 +17,8 @@ hits_needed: 2
 hit_window: 2
 confirm_single: 0.70
 cooldown_s: 30
-# Golden plover has weight 3; its lower threshold is checked against
-# false confirmations on every other clip in eval_results.md.
+# Golden plover has weight 3: lower hit threshold (live calls through a phone
+# scored low) but a stricter single-window rule (a lone 0.73 spike on a wood
+# sandpiper clip). Both checked against every other clip in eval_results.md.
 species_hit: {golden_plover: 0.35}
+species_single: {golden_plover: 0.85}

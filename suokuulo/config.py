@@ -37,6 +37,7 @@ class Config:
     hits_needed: int = 2
     hit_window: int = 3
     confirm_single: float | None = None  # one window at or above this also confirms
+    species_single: dict | None = None   # per-label overrides of confirm_single
     cooldown_s: float = 30
     # score and alerts
     base_score: int = 50

@@ -13,6 +13,7 @@ class Smoother:
         self.label_hit = cfg.species_hit or {}
         self.n, self.k, self.cooldown = cfg.hit_window, cfg.hits_needed, cfg.cooldown_s
         self.single = cfg.confirm_single or float("inf")
+        self.label_single = cfg.species_single or {}
         self.history = {}   # label -> deque of hit confidences, 0.0 = miss
         self.kind = {}
         self.last = {}      # label -> time of last confirmation
@@ -32,7 +33,7 @@ class Smoother:
         events = []
         for label, h in self.history.items():
             h.append(best[label].confidence if label in best else 0.0)
-            confirmed = sum(c > 0 for c in h) >= self.k or h[-1] >= self.single
+            confirmed = sum(c > 0 for c in h) >= self.k or h[-1] >= self.label_single.get(label, self.single)
             if confirmed and t - self.last.get(label, -1e18) >= self.cooldown:
                 self.last[label] = t
                 events.append(Detection(label, self.kind[label], max(h)))
