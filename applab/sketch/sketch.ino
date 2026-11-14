@@ -14,6 +14,17 @@
 //   beep(int)               startup beep, the buzzer's only sound
 //   summary(health, richness %, activity %, species mask, detections today)
 //                           all int; health -1 = no score
+//   heartbeat(int)          every 10 s from the analysis loop
+//
+// Watchdog: if Linux heartbeats stop for 60 s (10 min after boot, while the
+// app starts), the MCU sends a linux_down payload; if nothing else went out
+// for an hour it sends a heartbeat payload (uptime, minutes since the last
+// Linux heartbeat); when heartbeats return it sends one recovered payload.
+// So the office can tell device dead (silence) from analysis crashed
+// (linux_down / heartbeat without linux_ok) from healthy but quiet (summaries).
+// The MCU cannot reset the Linux side: the UNO Q board files expose no line
+// from the STM32 to the QRB2210's reset or power (it is the other way round:
+// Linux flashes and resets the MCU over SWD). So there is no reset attempt.
 //
 // Bridge handlers run on a separate thread from loop() (RouterBridge README).
 // They only store values in volatile variables; loop() does every matrix and
@@ -30,6 +41,9 @@ const uint8_t DIGIT_LEVEL = 4, BAR_LEVEL = 2;  // grayscale 0..7
 const int BEEP_HZ = 1000, BEEP_MS = 120;
 const uint8_t TX_LEVEL = 3;
 const unsigned long TX_ICON_MS = 3000;
+const unsigned long LINUX_DOWN_MS = 60000UL;        // no heartbeat for this long: linux_down
+const unsigned long BOOT_GRACE_MS = 600000UL;       // first heartbeat may take this long after boot
+const unsigned long HEARTBEAT_TX_MS = 3600000UL;    // MCU heartbeat if nothing else was sent
 
 // 3x5 digits, one byte per row, bit 2 = left column. Index 10 = "-".
 const uint8_t FONT[11][5] = {
@@ -46,6 +60,8 @@ volatile int score = -1;           // -1 = no score yet / off season
 volatile bool beepRequest = false;
 volatile bool summaryPending = false;
 Summary incoming;                  // filled by summary(), copied by loop()
+volatile unsigned long lastHeartbeatMs = 0;
+volatile bool heartbeatArrived = false;
 
 // Owned by loop().
 uint8_t frame[ROWS * COLS], shown[ROWS * COLS];
@@ -53,6 +69,7 @@ Summary last;                      // latest summary, reused by later payloads
 uint8_t seq = 0;
 unsigned long txAt = 0;
 bool txShown = false;
+bool everHeard = false, linuxDown = false;
 
 void show_score(int s) { score = s < 0 ? -1 : constrain(s, 0, 100); }
 void beep(int) { beepRequest = true; }
@@ -62,7 +79,13 @@ void summary(int health, int richness, int activity, int mask, int detections) {
   incoming.activity = constrain(activity, 0, 100);
   incoming.speciesMask = mask & 0xffff;
   incoming.detections = constrain(detections, 0, 65535);
+  lastHeartbeatMs = millis();  // a summary is also a sign of life
+  heartbeatArrived = true;
   summaryPending = true;  // set last: loop() copies incoming after seeing it
+}
+void heartbeat(int) {
+  lastHeartbeatMs = millis();
+  heartbeatArrived = true;
 }
 
 // Transmit hook. Returns true if a radio took the packet.
@@ -73,6 +96,10 @@ bool radioSend(const uint8_t *buf, size_t len) {
   (void)buf;
   (void)len;
   return false;  // no LoRa module attached
+}
+
+uint32_t minutesSinceHeartbeat(unsigned long now) {
+  return everHeard ? (now - lastHeartbeatMs) / 60000UL : 65535;
 }
 
 void transmit(uint8_t type, uint8_t flags, uint32_t sinceHeartbeatMin) {
@@ -103,6 +130,8 @@ void setup() {
   Bridge.provide("show_score", show_score);
   Bridge.provide("beep", beep);
   Bridge.provide("summary", summary);
+  Bridge.provide("heartbeat", heartbeat);
+  transmit(TYPE_HEARTBEAT, 0, minutesSinceHeartbeat(millis()));  // MCU booted
 }
 
 // Draws glyph g of FONT with its left column at col.
@@ -141,11 +170,26 @@ void loop() {
     beepRequest = false;
     buzzer.tone(BEEP_HZ, BEEP_MS);  // one I2C write; the module times the note
   }
+  if (heartbeatArrived) {
+    heartbeatArrived = false;
+    everHeard = true;
+    if (linuxDown) {
+      linuxDown = false;
+      transmit(TYPE_RECOVERED, FLAG_LINUX_OK, 0);
+    }
+  }
   if (summaryPending) {
     summaryPending = false;
     last = incoming;
     transmit(TYPE_SUMMARY, FLAG_LINUX_OK, 0);
   }
+  unsigned long silentFor = now - (everHeard ? lastHeartbeatMs : 0);
+  if (!linuxDown && silentFor > (everHeard ? LINUX_DOWN_MS : BOOT_GRACE_MS)) {
+    linuxDown = true;
+    transmit(TYPE_LINUX_DOWN, 0, minutesSinceHeartbeat(now));
+  }
+  if (now - txAt >= HEARTBEAT_TX_MS)
+    transmit(TYPE_HEARTBEAT, linuxDown ? 0 : FLAG_LINUX_OK, minutesSinceHeartbeat(now));
   if (txShown && now - txAt >= TX_ICON_MS) txShown = false;
   render();
 }

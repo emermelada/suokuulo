@@ -10,6 +10,7 @@ from .scoring import ALERT_GROUPS, Soundscape
 from .state import memory
 
 SAMPLE_RATE = 48000
+HEARTBEAT_S = 10  # to the MCU watchdog, which reports Linux down after 60 s without one
 
 
 class Pipeline:
@@ -20,7 +21,7 @@ class Pipeline:
         self.soundscape = Soundscape(cfg, species, now, log.path if log else None)
         self.windows, self.inference_ms, self.stats_at = 0, [], now()
         self.score, self.started = None, False
-        self.uplink_at = None
+        self.uplink_at = self.heartbeat_at = None
         self.indicators = [s.id for s in species if s.kind == "indicator"]  # payload bit order
 
     def step(self, window, sample_rate=SAMPLE_RATE):
@@ -63,6 +64,9 @@ class Pipeline:
             ram = memory()
             ram = f"board {ram['used_mb']}/{ram['total_mb']} MB used, app {ram['app_mb']} MB" if ram else "n/a"
             print(f"[stats] inference {mean_ms:.0f} ms/window (mean of last {len(self.inference_ms)}), RAM {ram}")
+        if t - self.heartbeat_at >= HEARTBEAT_S:  # from the analysis loop: stops if analysis stalls
+            self.heartbeat_at = t
+            self.display.heartbeat()
         snap = self.soundscape.snapshot()
         if t - self.uplink_at >= self.cfg.uplink_interval_s:
             self.uplink_at = t
@@ -90,7 +94,7 @@ class Pipeline:
             if self.cfg.buzzer_startup:
                 self.display.beep()
             self.show_score(self.soundscape.health()["score"])
-            self.uplink_at = self.now()  # one summary at start, so the office sees the boot
+            self.uplink_at = self.heartbeat_at = self.now()  # one summary at start: the office sees the boot
             self.send_uplink(self.soundscape.snapshot())
             self.started = True
             if self.state:

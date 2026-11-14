@@ -36,6 +36,9 @@ class Quiet:
     def beep(self):
         self.sounds.append("beep")
 
+    def heartbeat(self):
+        pass
+
     def uplink(self, *summary):
         self.sounds.append(f"uplink {summary}")
 

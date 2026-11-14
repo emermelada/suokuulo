@@ -44,6 +44,10 @@ def fake_arduino(calls, api, rate):
         def call(name, *args, timeout=10):
             calls.append((name, *args))
 
+        @staticmethod
+        def notify(name, *args):
+            calls.append((name, *args))
+
     class App:
         @staticmethod
         def run(user_loop):
@@ -70,7 +74,7 @@ def test_board_entrypoint_wiring(monkeypatch, rate):
     finally:
         log.unlink(missing_ok=True)
     assert calls[0] == ("beep", 1)  # startup beep, the buzzer's only sound
-    assert {c[0] for c in calls} == {"beep", "show_score", "summary"}
+    assert {c[0] for c in calls} <= {"beep", "show_score", "summary", "heartbeat"}
     summary = next(c for c in calls if c[0] == "summary")  # sent once at start: nothing heard yet
     assert summary == ("summary", 0, 0, 0, 0, 0)
     scores = [c[1] for c in calls if c[0] == "show_score"]

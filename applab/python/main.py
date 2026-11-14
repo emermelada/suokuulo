@@ -40,6 +40,12 @@ class BridgeDisplay:
     def beep(self):
         self._call("beep", 1)
 
+    def heartbeat(self):
+        try:
+            Bridge.notify("heartbeat", 1)  # fire and forget: never blocks the analysis
+        except Exception as e:
+            print(f"[bridge] heartbeat failed: {e}")
+
     def uplink(self, health, richness, activity, species_mask, detections):
         self._call("summary", int(health), int(richness), int(activity), int(species_mask), int(detections))
 

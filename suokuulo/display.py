@@ -6,6 +6,7 @@ class Display(Protocol):
     def beep(self) -> None: ...                     # startup beep, the buzzer's only sound
     def uplink(self, health: int, richness: int, activity: int, species_mask: int, detections: int) -> None: ...
                                                     # hourly summary; the MCU encodes and transmits it
+    def heartbeat(self) -> None: ...                # every 10 s; the MCU watchdog reports when it stops
 
 
 class ConsoleDisplay:
@@ -22,6 +23,9 @@ class ConsoleDisplay:
 
     def beep(self):
         print("  [display] [BEEP]")
+
+    def heartbeat(self):
+        pass
 
     def uplink(self, health, richness, activity, species_mask, detections):
         print(f"  [uplink] health {health} richness {richness}% activity {activity}% "
