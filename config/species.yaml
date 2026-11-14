@@ -1,13 +1,16 @@
+# Labels copied from `python scripts/list_labels.py` output (BirdNET v2.4).
+# Order matters: show_bird(i) on the MCU uses the index into this list.
+# Disturbance labels must stay here, or BirdNET's species filter drops them.
 species:
-  - {id: golden_plover,  label: TBD, kind: indicator, weight: 3}
-  - {id: wood_sandpiper, label: TBD, kind: indicator, weight: 1}
-  - {id: common_snipe,   label: TBD, kind: indicator, weight: 1}
-  - {id: curlew,         label: TBD, kind: indicator, weight: 1}
-  - {id: whimbrel,       label: TBD, kind: indicator, weight: 1}
-  - {id: meadow_pipit,   label: TBD, kind: indicator, weight: 1}
-  - {id: yellow_wagtail, label: TBD, kind: indicator, weight: 1}
-  - {id: common_crane,   label: TBD, kind: indicator, weight: 1}
-  - {id: engine,         label: TBD, kind: disturbance}
-  - {id: power_tools,    label: TBD, kind: disturbance}
-  - {id: gun,            label: TBD, kind: disturbance}
-  - {id: human_voice,    label: TBD, kind: disturbance}
+  - {id: golden_plover,  label: "Pluvialis apricaria_European Golden-Plover", kind: indicator, weight: 3}
+  - {id: wood_sandpiper, label: "Tringa glareola_Wood Sandpiper",             kind: indicator, weight: 1}
+  - {id: common_snipe,   label: "Gallinago gallinago_Common Snipe",           kind: indicator, weight: 1}
+  - {id: curlew,         label: "Numenius arquata_Eurasian Curlew",           kind: indicator, weight: 1}
+  - {id: whimbrel,       label: "Numenius phaeopus_Whimbrel",                 kind: indicator, weight: 1}
+  - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator, weight: 1}
+  - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator, weight: 1}
+  - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator, weight: 1}
+  - {id: engine,         label: "Engine_Engine",                              kind: disturbance}
+  - {id: power_tools,    label: "Power tools_Power tools",                    kind: disturbance}
+  - {id: gun,            label: "Gun_Gun",                                    kind: disturbance}
+  - {id: human_voice,    label: "Human vocal_Human vocal",                    kind: disturbance}
