@@ -22,3 +22,7 @@ cooldown_s: 30
 # sandpiper clip). Both checked against every other clip in eval_results.md.
 species_hit: {golden_plover: 0.35}
 species_single: {golden_plover: 0.85}
+# Machinery: engine, power tools and gun pooled into one any-disturbance signal
+# (strongest of them per window), confirmed by the same rule. Human voice stays
+# its own label at disturbance_hit (0.35).
+any_disturbance_hit: 0.20

@@ -163,3 +163,15 @@ def test_per_label_single_window_override():
     clock = Clock()
     s = Smoother(Config(hit_window=2, confirm_single=0.70, species_single={"golden_plover": 0.85}), clock)
     assert feed(s, clock, [[bird(c=0.8), bird("curlew", 0.8)]]) == [["curlew"]]
+
+
+def test_pooled_disturbance_confirms_across_labels():
+    clock = Clock()
+    s = Smoother(Config(any_disturbance_hit=0.20), clock)
+    # engine then power tools, each alone too weak and too short to confirm on its own
+    events = feed(s, clock, [[noise("engine", 0.22)], [noise("power_tools", 0.30)]])
+    assert events == [[], ["power_tools"]]
+    clock.t = 0
+    s = Smoother(Config(any_disturbance_hit=0.20), clock)
+    voice_and_engine = [noise("human_voice", 0.25), noise("engine", 0.25)]  # voice is not pooled
+    assert feed(s, clock, [voice_and_engine, voice_and_engine]) == [[], ["engine"]]

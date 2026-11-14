@@ -97,19 +97,21 @@ def summary(rows, kind):
     m["clips confirming a wrong indicator"] = sum(bool(split(r["confirmed"]) & (set(indicators) - {r["label"]})) for r in rows)
     m["golden_plover confirmed on other clips"] = sum("golden_plover" in split(r["confirmed"]) for r in rows
                                                       if r["label"] != "golden_plover")
-    tp = {s: 0 for s in ("ESC-50", "frugalai")}
-    n = dict(tp)
+    tp, n = Counter(), Counter()
     for r in rows:
         if r["label"] in machinery:
-            n[source(r["file"])] += 1
-            tp[source(r["file"])] += bool(split(r["confirmed"]) & machinery)
+            group = f"{r['label']} {source(r['file'])}"
+            n[group] += 1
+            tp[group] += bool(split(r["confirmed"]) & machinery)
+    for group in sorted(n):
+        m[f"machinery recall, {group} clips"] = f"{tp[group]}/{n[group]} ({pct(tp[group], n[group])})"
+    esc = sum(v for g, v in tp.items() if g.endswith("ESC-50"))
+    m["machinery recall, all ESC-50 clips"] = f"{esc}/{sum(v for g, v in n.items() if g.endswith('ESC-50'))}"
     fp_bg = sum(bool(split(r["confirmed"]) & machinery) for r in rows if r["label"] not in kind)
     fp_all = sum(bool(split(r["confirmed"]) & machinery) for r in rows if r["label"] not in machinery)
-    for s in tp:
-        m[f"machinery recall, {s} clips"] = f"{tp[s]}/{n[s]} ({pct(tp[s], n[s])})"
     m["machinery false alarms, background clips"] = fp_bg
     m["machinery false alarms, bird + speech clips"] = fp_all - fp_bg
-    m["machinery precision vs background (ESC-50)"] = pct(tp["ESC-50"], tp["ESC-50"] + fp_bg)
+    m["machinery precision vs background (ESC-50)"] = pct(esc, esc + fp_bg)
     m["machinery precision vs all non-machinery clips"] = pct(sum(tp.values()), sum(tp.values()) + fp_all)
     voice = [r for r in rows if r["label"] == VOICE]
     m["human_voice confirmed on speech clips"] = f"{sum(VOICE in split(r['confirmed']) for r in voice)}/{len(voice)}"
@@ -217,8 +219,8 @@ BirdNET v2.4 TFLite model (files from birdnetlib), run directly with ai-edge-lit
 `{args.config}`:{overrides}{mixing}
 3 s windows every {cfg.hop_s} s; high-pass {cfg.highpass_hz or 'off'} Hz; indicator threshold
 {cfg.indicator_hit} (overrides {cfg.species_hit or 'none'}); any-disturbance threshold
-{cfg.any_disturbance_hit if hasattr(cfg, 'any_disturbance_hit') else cfg.disturbance_hit}, human voice {cfg.disturbance_hit};
-confirm {cfg.hits_needed} of {cfg.hit_window} windows or one window >= {cfg.confirm_single}.
+{cfg.any_disturbance_hit or 'off'}, human voice {cfg.disturbance_hit}; confirm {cfg.hits_needed} of
+{cfg.hit_window} windows or one window >= {cfg.confirm_single} (overrides {cfg.species_single or 'none'}).
 
 - Model imports + load: {classifier.load_s:.2f} s
 - Mean inference: {mean_ms:.0f} ms per window over {len(timings)} windows (this machine)

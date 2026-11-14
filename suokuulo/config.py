@@ -34,6 +34,8 @@ class Config:
     indicator_hit: float = 0.50
     disturbance_hit: float = 0.35
     species_hit: dict | None = None   # per-label overrides, e.g. {golden_plover: 0.35}
+    any_disturbance_hit: float | None = None  # pool every disturbance but human voice into one
+                                              # signal (max per window); None = each label alone
     hits_needed: int = 2
     hit_window: int = 3
     confirm_single: float | None = None  # one window at or above this also confirms
