@@ -20,6 +20,8 @@ profiles:
       meadow_pipit:   {weight: 1, dawn: 15, day: 10, night: 0}
       yellow_wagtail: {weight: 1, dawn: 10, day: 8, night: 0}
       common_crane:   {weight: 1, dawn: 5,  day: 3, night: 1}
+      whooper_swan:     {weight: 1, dawn: 2, day: 1, night: 0.5}   # scarcer than the waders
+      spotted_redshank: {weight: 1, dawn: 2, day: 1, night: 0.5}
   migration:           # flocks passing and resting, fewer calls per hour
     months: [3, 4, 8, 9, 10]
     species:

@@ -195,7 +195,7 @@ def test_today_summary():
     clock.t += 120
     s.update([bird("curlew"), bird("willow_ptarmigan")])  # ptarmigan is not expected in breeding
     today = s.snapshot()["today"]
-    assert (today["species_heard"], today["expected_heard"], today["expected"], today["detections"]) == (3, 2, 8, 3)
+    assert (today["species_heard"], today["expected_heard"], today["expected"], today["detections"]) == (3, 2, 10, 3)
     assert (today["first"][11:16], today["last"][11:16]) == ("05:00", "05:02") and sum(today["hourly"]) == 3
 
 

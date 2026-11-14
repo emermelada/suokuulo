@@ -29,14 +29,15 @@ species:
   - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator,
      months_present: [3, 4, 5, 6, 7, 8, 9, 10],
      source: "BirdLife Suomi lists rare winter records; Mar-Oct from general knowledge, unverified"}
-  # Seasonal extension (eval_results.md): migration and winter residents. Taiga
-  # bean goose (2/5 clips) and ruff (0/5) were tested and left out.
+  # Seasonal extension (eval_results.md): migrants that also breed here, and
+  # winter residents. Taiga bean goose (2/5 clips) and ruff (0/5) were tested
+  # and left out.
   - {id: whooper_swan,     label: "Cygnus cygnus_Whooper Swan",          kind: indicator,
      months_present: [3, 4, 5, 6, 7, 8, 9, 10, 11],
-     source: "BirdLife Suomi: some winter on open water; Mar-Nov on mires from general knowledge, unverified"}
+     source: "Breeds on open boreal peatlands and bog pools: SEO/BirdLife species page (URL not recorded) and a peatland restoration professional. BirdLife Suomi: some winter on open water; Mar-Nov on mires from general knowledge, unverified"}
   - {id: spotted_redshank, label: "Tringa erythropus_Spotted Redshank",  kind: indicator,
      months_present: [4, 5, 6, 7, 8, 9],
-     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 17.4.; departure month from general knowledge, unverified"}
+     source: "Breeds on open boreal peatlands and bog pools: SEO/BirdLife species page (URL not recorded) and a peatland restoration professional. BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 17.4.; departure month from general knowledge, unverified"}
   - {id: willow_ptarmigan, label: "Lagopus lagopus_Willow Ptarmigan",    kind: indicator,
      months_present: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
      source: "resident; BirdLife Suomi classes it as wintering"}
