@@ -18,7 +18,7 @@ events.csv.
 import csv
 import statistics
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -94,8 +94,10 @@ class Baseline:
         return f"learned from {self.learned_days} days" if self.learned else "configured"
 
 
-def read_log(path, tz):
-    """(t, label, kind, confidence) of every event in events.csv; bad rows skipped."""
+def read_log(path):
+    """(t, label, kind, confidence) of every event in events.csv; bad rows skipped.
+    Rows without a UTC offset come from before the offset was logged, written
+    by the App Lab container, whose clock is UTC."""
     if not path or not Path(path).exists():
         return []
     out = []
@@ -104,7 +106,7 @@ def read_log(path, tz):
             try:
                 dt = datetime.fromisoformat(row["iso_time"])
                 if row["label"]:
-                    out.append(((dt if dt.tzinfo else dt.replace(tzinfo=tz)).timestamp(),
+                    out.append(((dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).timestamp(),
                                 row["label"], row["kind"], float(row["confidence"] or 0)))
             except (KeyError, TypeError, ValueError):
                 continue
@@ -123,7 +125,7 @@ class Soundscape:
         self.group = {s.id: s.group for s in species}
         self.baseline = Baseline(cfg.baseline_file, cfg.baseline_profile)
         t = now()
-        self.events = [e for e in read_log(log_path, self.tz) if e[0] > t - KEEP_S]  # rebuild after restart
+        self.events = [e for e in read_log(log_path) if e[0] > t - KEEP_S]  # rebuild after restart
         self.bands = {}  # minute -> [anthrophony, biophony] power summed over its windows (not logged)
         self.day = None
         self.alarm, self.silent = False, False
@@ -143,7 +145,7 @@ class Soundscape:
             total[1] += bands[1]
         if self.local(t).date() != self.day:  # midnight (or startup): relearn the baseline
             self.day = self.local(t).date()
-            self.baseline.learn(read_log(self.log_path, self.tz), self.day, self.tz, c.learn_min_days)
+            self.baseline.learn(read_log(self.log_path), self.day, self.tz, c.learn_min_days)
         alerts = []
         for e in events:
             self.events.append((t, e.label, e.kind, e.confidence))

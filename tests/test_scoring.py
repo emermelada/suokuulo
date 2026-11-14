@@ -95,7 +95,7 @@ def test_counters_rebuilt_from_events_csv(tmp_path):
     log = EventLog(tmp_path / "events.csv")
     log.write("2026-06-10T05:00:10+03:00", "golden_plover", "indicator", "0.9", "70", "")
     log.write("2026-06-10T05:00:40+03:00", "golden_plover", "indicator", "0.8", "70", "")
-    log.write("2026-06-10T05:02:00", "curlew", "indicator", "0.7", "75", "")  # old rows had no offset
+    log.write("2026-06-10T02:02:00", "curlew", "indicator", "0.7", "75", "")  # old rows: no offset, UTC
     log.write("2026-06-10T05:03:00+03:00", "engine", "disturbance", "0.5", "75", "disturbance")
     log.write("2026-06-10T05:04:00+03:00", "", "", "", "75", "silence")
     log.write("2026-06-09T05:00:00+03:00", "curlew", "indicator", "0.7", "75", "")  # yesterday
