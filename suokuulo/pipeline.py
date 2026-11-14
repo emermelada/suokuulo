@@ -11,7 +11,7 @@ SAMPLE_RATE = 48000
 class Pipeline:
     def __init__(self, cfg, species, classifier, display, now=time.monotonic, state=None, log=None, verbose=False):
         self.classifier, self.display, self.state, self.log = classifier, display, state, log
-        self.verbose = verbose
+        self.verbose, self.headline = verbose, cfg.headline_species
         self.index = {s.id: i for i, s in enumerate(species)}
         self.smoother = Smoother(cfg, now)
         self.scorer = ScoreEngine(cfg, {s.id: s.weight for s in species if s.kind == "indicator"}, now)
@@ -40,6 +40,7 @@ class Pipeline:
             print(f"{now_iso} window {self.windows:4d} EVENT {e.label} ({e.kind}) conf {e.confidence:.2f} score {score}")
             if e.kind == "indicator":
                 self.display.show_bird(self.index[e.label])
+                self.display.chirp(int(e.label == self.headline))
         for a in alerts:
             print(f"{now_iso} window {self.windows:4d} ALERT {a['type']} {a['label']}")
         if score != prev_score:
@@ -59,7 +60,8 @@ class Pipeline:
                               self.scorer.species_heard(), sum(self.inference_ms) / len(self.inference_ms))
         return events
 
-    def run(self, windows):
+    def run(self, windows, mute=False):
+        self.display.mute(mute)
         self.display.show_score(self.scorer.score)
         for w in windows:
             self.step(w)

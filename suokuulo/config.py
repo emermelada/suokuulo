@@ -41,6 +41,8 @@ class Config:
     alarm_clear_s: float = 20
     silence_s: float = 1800
     # outputs
+    headline_species: str = "golden_plover"  # gets the double chirp
+    mute: bool = False                        # buzzer off, matrix still works
     log_file: str = "events.csv"
     web_host: str = "0.0.0.0"
     web_port: int = 8000

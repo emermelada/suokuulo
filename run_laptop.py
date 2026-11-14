@@ -32,23 +32,32 @@ def main():
     ap.add_argument("--input", help="override audio file/folder")
     ap.add_argument("--realtime", action="store_true", help="pace file replay at one window per 3 s")
     ap.add_argument("--loop", action="store_true", help="loop file replay forever")
+    ap.add_argument("--mic", nargs="?", const="mic", choices=["mic", "arecord"],
+                    help="live capture: sounddevice (default) or arecord")
+    ap.add_argument("--device", help="mic device (sounddevice index/name, or ALSA name for arecord)")
+    ap.add_argument("--mute", action="store_true", help="buzzer off")
     ap.add_argument("--no-web", action="store_true", help="do not start the dashboard")
     ap.add_argument("-v", "--verbose", action="store_true", help="print raw detections per window")
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True)  # live console when piped to a file
 
     cfg = config.load(args.config)
+    cfg.mute |= args.mute
     species = config.load_species(cfg.species_file)
     display = ConsoleDisplay(species)
 
     if args.mock:
         windows, now = simulated(np.zeros(WINDOW, np.float32) for _ in MOCK_SCRIPT)
         Pipeline(cfg, species, MockClassifier(MOCK_SCRIPT, species), display, now=now,
-                 log=EventLog(cfg.log_file)).run(windows)
+                 log=EventLog(cfg.log_file)).run(windows, mute=cfg.mute)
         return
 
     if args.input:
         cfg.source, cfg.input = "file", args.input
+    if args.mic:
+        cfg.source = args.mic
+    if args.device:
+        cfg.device = int(args.device) if args.device.isdigit() else args.device
     cfg.realtime |= args.realtime
     cfg.loop |= args.loop
     from suokuulo.classifier import BirdNetClassifier
@@ -57,7 +66,7 @@ def main():
     if state:
         serve(state, cfg.web_host, cfg.web_port)
     Pipeline(cfg, species, classifier, display, state=state, log=EventLog(cfg.log_file),
-             verbose=args.verbose).run(make_source(cfg).windows())
+             verbose=args.verbose).run(make_source(cfg).windows(), mute=cfg.mute)
 
 
 if __name__ == "__main__":
