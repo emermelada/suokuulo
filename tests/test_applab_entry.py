@@ -1,5 +1,6 @@
 """Smoke test for applab/python/main.py with fake arduino.* modules: checks the
-board wiring (mic re-chunking, Bridge calls, WebUI endpoint) on the laptop.
+board wiring (mic re-chunking, Bridge calls, WebUI endpoint) on the laptop
+with config/demo.yaml (breeding baseline, 10 min window).
 Needs a fetched golden plover clip; skipped otherwise."""
 import runpy
 import sys
@@ -68,6 +69,11 @@ def test_board_entrypoint_wiring(monkeypatch, rate):
         runpy.run_path(str(ROOT / "applab/python/main.py"), run_name="__main__")
     finally:
         log.unlink(missing_ok=True)
-    assert ("mute", False) in calls
-    assert ("show_bird", 0) in calls and ("chirp", 1) in calls and ("show_score", 80) in calls
-    assert api["GET", "/api/state"]()["score"] == 80
+    assert calls[:2] == [("chirp", 2), ("mute", False)]  # startup beep; demo.yaml has buzzer alerts on
+    assert ("chirp", 1) in calls  # golden plover: double chirp
+    scores = [c[1] for c in calls if c[0] == "show_score"]
+    assert scores[0] == 0 and scores[-1] > 0  # nothing heard yet, then the plover raises health
+    state = api["GET", "/api/state"]()
+    assert state["health"]["score"] == scores[-1] and state["status"] == "listening"
+    plover = next(r for r in state["species"] if r["id"] == "golden_plover")
+    assert plover["detections_today"] >= 1 and state["events"][0]["label"] == "golden_plover"

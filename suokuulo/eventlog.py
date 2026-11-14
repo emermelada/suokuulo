@@ -7,6 +7,7 @@ FIELDS = ["iso_time", "label", "kind", "confidence", "score", "alert"]
 
 class EventLog:
     def __init__(self, path):
+        self.path = path
         new = not os.path.exists(path) or os.path.getsize(path) == 0
         self.file = open(path, "a", newline="")
         self.writer = csv.writer(self.file)

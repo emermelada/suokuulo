@@ -1,5 +1,6 @@
-# Laptop: board.yaml plus replay from test_clips/. Override with --input, --mic, --mock.
-include: board.yaml
+# Laptop: demo.yaml (board settings + demo scoring) plus replay from test_clips/.
+# Override with --input, --mic, --mock.
+include: demo.yaml
 source: file
 input: test_clips
 verbose: false

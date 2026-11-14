@@ -1,16 +1,17 @@
 # Labels copied from `python scripts/list_labels.py` output (BirdNET v2.4).
-# Order matters: show_bird(i) on the MCU uses the index into this list.
+# Weights and expected activity per season: baseline.yaml. Disturbance groups
+# (people, machinery, gunshot) set how the dashboard and alerts treat them.
 # Disturbance labels must stay here, or BirdNET's species filter drops them.
 species:
-  - {id: golden_plover,  label: "Pluvialis apricaria_European Golden-Plover", kind: indicator, weight: 3}
-  - {id: wood_sandpiper, label: "Tringa glareola_Wood Sandpiper",             kind: indicator, weight: 1}
-  - {id: common_snipe,   label: "Gallinago gallinago_Common Snipe",           kind: indicator, weight: 1}
-  - {id: curlew,         label: "Numenius arquata_Eurasian Curlew",           kind: indicator, weight: 1}
-  - {id: whimbrel,       label: "Numenius phaeopus_Whimbrel",                 kind: indicator, weight: 1}
-  - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator, weight: 1}
-  - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator, weight: 1}
-  - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator, weight: 1}
-  - {id: engine,         label: "Engine_Engine",                              kind: disturbance}
-  - {id: power_tools,    label: "Power tools_Power tools",                    kind: disturbance}
-  - {id: gun,            label: "Gun_Gun",                                    kind: disturbance}
-  - {id: human_voice,    label: "Human vocal_Human vocal",                    kind: disturbance}
+  - {id: golden_plover,  label: "Pluvialis apricaria_European Golden-Plover", kind: indicator}
+  - {id: wood_sandpiper, label: "Tringa glareola_Wood Sandpiper",             kind: indicator}
+  - {id: common_snipe,   label: "Gallinago gallinago_Common Snipe",           kind: indicator}
+  - {id: curlew,         label: "Numenius arquata_Eurasian Curlew",           kind: indicator}
+  - {id: whimbrel,       label: "Numenius phaeopus_Whimbrel",                 kind: indicator}
+  - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator}
+  - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator}
+  - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator}
+  - {id: engine,         label: "Engine_Engine",                              kind: disturbance, group: machinery}
+  - {id: power_tools,    label: "Power tools_Power tools",                    kind: disturbance, group: machinery}
+  - {id: gun,            label: "Gun_Gun",                                    kind: disturbance, group: gunshot}
+  - {id: human_voice,    label: "Human vocal_Human vocal",                    kind: disturbance, group: people}

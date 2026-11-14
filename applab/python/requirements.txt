@@ -6,3 +6,4 @@ birdnetlib==0.18.1      # only for the BirdNET v2.4 model + labels files; never 
 ai-edge-litert==2.3.0   # TFLite runtime
 soundfile==0.14.0       # file replay (source: file)
 soxr==1.1.0             # resampling if the mic is not 48 kHz
+tzdata==2026.5          # Europe/Helsinki for day/hour/midnight if the OS has no zoneinfo

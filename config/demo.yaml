@@ -1,0 +1,8 @@
+# Demo on the board (applab/python/main.py loads this file): board.yaml plus a
+# short score window, the breeding-season baseline and audible alerts.
+# For a field deployment load board.yaml instead (CONFIG in main.py).
+include: board.yaml
+site_name: Junction 2026 demo bog
+baseline_profile: breeding
+score_window_min: 10
+buzzer_alerts: true

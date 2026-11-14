@@ -1,0 +1,36 @@
+# Expected indicator activity at a healthy restored Finnish bog, in
+# detection-minutes per hour (minutes in which the species is confirmed at
+# least once). The numbers are starting estimates, not survey data: once
+# events.csv holds learn_min_days of history the app learns them per hour of
+# day from what it heard and shows "baseline: learned from N days".
+#
+# Profile is chosen by month unless baseline_profile is set in the config.
+# Hours (local time) when each part of the day starts:
+periods: {dawn: 3, day: 7, night: 22}
+
+profiles:
+  breeding:            # territorial song, display flights, alarm calls
+    months: [5, 6, 7]
+    species:
+      golden_plover:  {weight: 3, dawn: 12, day: 6, night: 3}
+      wood_sandpiper: {weight: 1, dawn: 15, day: 8, night: 4}
+      common_snipe:   {weight: 1, dawn: 20, day: 6, night: 10}
+      curlew:         {weight: 1, dawn: 8,  day: 5, night: 2}
+      whimbrel:       {weight: 1, dawn: 8,  day: 4, night: 2}
+      meadow_pipit:   {weight: 1, dawn: 15, day: 10, night: 0}
+      yellow_wagtail: {weight: 1, dawn: 10, day: 8, night: 0}
+      common_crane:   {weight: 1, dawn: 5,  day: 3, night: 1}
+  migration:           # flocks passing and resting, fewer calls per hour
+    months: [3, 4, 8, 9, 10]
+    species:
+      golden_plover:  {weight: 3, dawn: 4, day: 4, night: 2}
+      wood_sandpiper: {weight: 1, dawn: 2, day: 2, night: 1}
+      common_snipe:   {weight: 1, dawn: 2, day: 1, night: 1}
+      curlew:         {weight: 1, dawn: 2, day: 2, night: 1}
+      whimbrel:       {weight: 1, dawn: 1, day: 1, night: 0}
+      meadow_pipit:   {weight: 1, dawn: 6, day: 6, night: 0}
+      yellow_wagtail: {weight: 1, dawn: 2, day: 2, night: 0}
+      common_crane:   {weight: 1, dawn: 6, day: 6, night: 1}
+  winter:              # all eight indicators have left: health shows "off season"
+    months: [11, 12, 1, 2]
+    species: {}

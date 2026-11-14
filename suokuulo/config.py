@@ -13,7 +13,7 @@ class Species:
     id: str        # our internal id, e.g. "golden_plover"
     label: str     # exact BirdNET label, "Scientific name_Common Name"
     kind: str      # "indicator" | "disturbance"
-    weight: int = 0
+    group: str = ""  # disturbances: people | machinery | gunshot | other
 
 
 @dataclass
@@ -41,18 +41,23 @@ class Config:
     confirm_single: float | None = None  # one window at or above this also confirms
     species_single: dict | None = None   # per-label overrides of confirm_single
     cooldown_s: float = 30
-    # score and alerts
-    base_score: int = 50
-    score_window_s: float = 600
-    bonus_per_weight: int = 10
-    bonus_cap: int = 50
-    penalty_per_event: int = 15
-    penalty_cap: int = 50
-    alarm_clear_s: float = 20
-    silence_s: float = 1800
+    # soundscape health: indicator birds only, against config/baseline.yaml
+    baseline_file: str = "baseline.yaml"  # relative to the config file
+    baseline_profile: str | None = None   # breeding | migration | winter; null = by month
+    score_window_min: float = 60          # rolling window for detection-minutes
+    richness_weight: float = 0.6
+    activity_weight: float = 0.4
+    learn_min_days: int = 3               # days of events.csv before the baseline is learned
+    timezone: str = "Europe/Helsinki"     # days, hours and midnight reset
+    # disturbance pressure: reported apart, never lowers health
+    pressure_minutes: tuple = (5, 15)     # disturbed minutes in the last hour: Moderate, High
+    alarm_clear_s: float = 20             # machinery alert clears this long after its last hit
+    silence_s: float = 1800               # alert after this long without a bird
     # outputs
+    site_name: str = ""
     headline_species: str = "golden_plover"  # gets the double chirp
-    mute: bool = False                        # buzzer off, matrix still works
+    buzzer_startup: bool = True               # one beep when the app starts
+    buzzer_alerts: bool = False               # bird chirps + machinery siren; LED matrix always works
     log_file: str = "events.csv"
     verbose: bool = False                     # print raw detections for every window
     web_host: str = "0.0.0.0"
@@ -61,14 +66,20 @@ class Config:
     demo: list | None = None
 
 
-def load(path) -> Config:
-    """`include: other.yaml` loads that file first; keys in this file override it."""
+def read(path) -> dict:
+    """YAML dict; `include: other.yaml` loads that file first and this file overrides it."""
     path = Path(path)
     data = yaml.safe_load(path.read_text()) or {}
     if "include" in data:
-        data = {**yaml.safe_load((path.parent / data.pop("include")).read_text()), **data}
-    cfg = Config(**data)
+        data = {**read(path.parent / data.pop("include")), **data}
+    return data
+
+
+def load(path) -> Config:
+    path = Path(path)
+    cfg = Config(**read(path))
     cfg.species_file = str(path.parent / cfg.species_file)
+    cfg.baseline_file = str(path.parent / cfg.baseline_file)
     return cfg
 
 

@@ -1,12 +1,13 @@
-# UNO Q, loaded by applab/python/main.py. config/laptop.yaml includes this file,
-# so detection settings are the same on the laptop and the board.
+# UNO Q field deployment. demo.yaml (what applab/python/main.py loads for the
+# demo) and laptop.yaml include this file, so detection settings are the same
+# everywhere. Field defaults: health window 60 min, baseline profile by month,
+# buzzer only beeps at startup (buzzer_alerts: false).
 source: applab        # App Lab Microphone peripheral; "file" with input: ... replays clips instead
 device: null          # null = Microphone.USB_MIC_1 (first USB mic)
 classifier: birdnet
 min_conf: 0.1
 log_file: events.csv  # relative to the app folder on the board
 web_port: 7000        # App Lab WebUI brick port (brick_config.yaml declares 7000)
-mute: false
 verbose: true         # raw detections per window in the App Lab log, for live tuning
 
 # Detection: 3 s windows every 2 s (1 s overlap). A label confirms on 2
