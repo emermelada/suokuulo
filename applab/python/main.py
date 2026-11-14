@@ -59,7 +59,7 @@ class AppLabMicSource:
     def windows(self):
         mic = Microphone(device=self.device, sample_rate=SAMPLE_RATE, channels=1, format="float32")
         mic.start()
-        rate = mic.sample_rate  # TODO(hardware): confirm the USB mic really opens at 48 kHz
+        rate = mic.sample_rate  # board test 2026-11-14: USB mic "Camera" opened at 48000 Hz
         print(f"[mic] {mic.name} at {rate} Hz")
         resampler = None
         if rate != SAMPLE_RATE:  # streaming, so no clicks at chunk edges
@@ -81,7 +81,6 @@ def main():
 
     state = State(cfg.site_name, ZoneInfo(cfg.timezone))
     ui = WebUI(port=cfg.web_port)  # serves ../assets/index.html
-    # TODO(hardware): open http://<board-ip>:7000/ from the laptop; check /api/state returns JSON.
     ui.expose_api("GET", "/api/state", state.snapshot)
 
     classifier = BirdNetClassifier(species, cfg.min_conf, cfg.highpass_hz)

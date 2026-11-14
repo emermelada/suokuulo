@@ -1,10 +1,32 @@
 # SuoKuulo
 
 Bioacoustic monitor for restored Finnish peatlands. A USB microphone listens in
-3 s windows, BirdNET v2.4 runs on the device, detections become a 0-100
-soundscape health score and alerts, the MCU shows it on the LED matrix and
-sounds the Modulino Buzzer, and a local dashboard serves it. No audio or data
-leaves the device.
+3 s windows (one every 2 s), BirdNET v2.4 runs on the device, indicator birds
+become a 0-100 soundscape health score, disturbance (people, machinery,
+gunshots) is reported separately, the MCU shows health on the LED matrix and
+sounds the Modulino Buzzer, and a local dashboard serves it all. No audio or
+data leaves the device.
+
+## How the score works
+
+- **Health (0-100) counts birds only.** Over the last hour (10 min in the
+  demo) it compares the indicator species heard with what a healthy bog is
+  expected to sound like at this season and time of day (`config/baseline.yaml`).
+  - *Richness*: how much of the expected species list was heard, golden plover
+    counting 3, the others 1.
+  - *Activity*: for each expected species, minutes in which it was heard vs
+    minutes expected, capped at 100 %. A minute counts once however often a
+    bird calls, so one loud bird cannot inflate the score.
+  - Health = 60 % richness + 40 % activity. 0-39 Poor, 40-69 Fair, 70-100 Good.
+    No species expected (winter) shows "Off season".
+- **Baseline.** Starting estimates per season (breeding May-Jul, migration
+  Mar-Apr and Aug-Oct, winter) and part of day. After 3 days of `events.csv`
+  the device learns its own: the median minutes per hour for each species at
+  that hour of day.
+- **Disturbance never lowers health.** People ("People nearby"), machinery
+  (engine, power tools) and gunshots are counted per day, and the minutes
+  disturbed in the last hour give a Low/Moderate/High pressure level. Only
+  machinery and gunshots raise the alert (matrix corner + siren).
 
 ## Laptop setup
 
@@ -32,37 +54,46 @@ Run scripts from the repo root. Keys come from the environment; never commit the
 | Scripted run, no model, no audio | `.venv/bin/python run_laptop.py --mock` |
 | Replay one file or folder | `.venv/bin/python run_laptop.py --input test_clips/golden_plover -v` |
 | Replay at live speed with dashboard | `.venv/bin/python run_laptop.py --input test_clips --realtime` then open http://localhost:8000 |
-| Demo (background, plover, snipe, crane, chainsaw, background) | `.venv/bin/python run_laptop.py --demo` |
+| Demo (quiet, plover, people, snipe, crane, chainsaw, quiet) | `.venv/bin/python run_laptop.py --demo` |
+| Same demo at full speed, health timeline | `.venv/bin/python scripts/simulate.py [--start 2026-06-10T05:00] [--web]` |
 | Live laptop mic | `.venv/bin/python run_laptop.py --mic` (or `--mic arecord --device plughw:1,0`) |
 | Unit tests | `.venv/bin/pytest -q` |
-| Evaluation | `.venv/bin/python scripts/evaluate.py` writes `eval_results.md` and `.csv` |
+| Evaluation | `.venv/bin/python scripts/evaluate.py` writes `eval_results.md` and `.csv` (see its docstring for `--speech`, `--mixed`, `--set`, `--compare`) |
+| Deploy to the board | `./deploy.sh [--restart]` (copies `applab/`, checks every file by sha256) |
 | BirdNET label check | `.venv/bin/python scripts/list_labels.py` |
 
-Flags: `-v` prints raw detections per window, `--mute` silences the buzzer,
+Flags: `-v` prints raw detections per window, `--mute` turns off chirps and siren,
 `--no-web` skips the dashboard, `--loop` loops replay. Events append to `events.csv`.
 
 ## Config switches
 
-`config/laptop.yaml` and `config/board.yaml` override the defaults in
-`suokuulo/config.py`. Unknown keys fail at startup.
+`config/board.yaml` (field deployment) holds the detection settings;
+`config/demo.yaml` includes it and sets the demo scoring (the board loads
+`demo.yaml`, see `CONFIG` in `applab/python/main.py`); `config/laptop.yaml`
+includes `demo.yaml` and replays files. Defaults are in `suokuulo/config.py`;
+unknown keys fail at startup.
 
-| Key | Default | Meaning |
+| Key | board / demo | Meaning |
 | --- | --- | --- |
-| `source` | `file` | `file`, `mic` (sounddevice), `arecord`, `applab` (board only) |
-| `input`, `loop`, `realtime` | `test_clips`, false, false | file replay |
-| `device` | null | mic device (index, ALSA name, or App Lab `usb:1`) |
-| `min_conf` | 0.1 | BirdNET's own floor; our thresholds sit above it |
-| `indicator_hit`, `disturbance_hit` | 0.50, 0.35 | per-window hit thresholds |
-| `hits_needed`, `hit_window`, `cooldown_s` | 2, 3, 30 | confirm 2 hits in 3 windows, then 30 s cooldown |
-| `base_score`, `score_window_s` | 50, 600 | score baseline and memory |
-| `bonus_per_weight`, `bonus_cap`, `penalty_per_event`, `penalty_cap` | 10, 50, 15, 50 | score rule |
-| `alarm_clear_s`, `silence_s` | 20, 1800 | alarm clears 20 s after the last disturbance hit; silence alert after 30 min |
-| `headline_species`, `mute` | `golden_plover`, false | double chirp species; buzzer off |
-| `log_file`, `web_host`, `web_port` | `events.csv`, `0.0.0.0`, 8000 | outputs (board: WebUI on 7000) |
-| `demo` | in `laptop.yaml` | `[path, max_windows]` playlist for `--demo` |
+| `hop_s` | 2.0 | a 3 s window every 2 s (1 s overlap) |
+| `hits_needed`, `hit_window`, `confirm_single` | 2, 2, 0.70 | confirm on 2 consecutive windows, or one window >= 0.70 |
+| `indicator_hit`, `species_hit`, `species_single` | 0.50, plover 0.35, plover 0.85 | per-window bird thresholds |
+| `any_disturbance_hit`, `disturbance_hit` | 0.20, 0.35 | engine/power tools/gun pooled into one signal; human voice alone |
+| `cooldown_s` | 30 | per label (and for the pooled signal); the first event is never delayed |
+| `highpass_hz` | 1000 | high-pass before inference; 0 = off |
+| `baseline_profile` | by month / `breeding` | season profile in `baseline.yaml` |
+| `score_window_min` | 60 / 10 | health window |
+| `richness_weight`, `activity_weight` | 0.6, 0.4 | health split |
+| `learn_min_days` | 3 | days of history before the baseline is learned |
+| `pressure_minutes` | [5, 15] | disturbed minutes in the last hour for Moderate, High |
+| `alarm_clear_s`, `silence_s` | 20, 1800 | alert clears 20 s after the last machinery hit; silence alert after 30 min without birds |
+| `buzzer_startup`, `buzzer_alerts` | true, false / true | startup beep; bird chirps + machinery siren |
+| `timezone`, `site_name` | Europe/Helsinki, demo name | days, hours, midnight reset; dashboard header |
+| `verbose` | true on the board | raw detections per window in the log |
+| `log_file`, `web_port` | `events.csv`, 7000 | outputs |
 
-Species, weights and exact BirdNET labels: `config/species.yaml`. Its order is
-the index `show_bird(i)` sends to the MCU.
+Species, BirdNET labels and disturbance groups: `config/species.yaml`.
+Expected activity per season and part of day: `config/baseline.yaml`.
 
 ## Board setup (Arduino UNO Q)
 
@@ -73,21 +104,20 @@ the Qwiic connector.
 1. Configure the board in Arduino App Lab once (board name, Wi-Fi, Linux
    password; the password is needed for SSH).
 2. Flash `applab/buzzer_test` first (below) to prove the Qwiic wiring.
-3. Copy the app. The repo uses symlinks, `tar -h` turns them into files:
-   ```sh
-   tar -chf - -C applab --exclude=buzzer_test . | \
-     ssh arduino@<board>.local 'mkdir -p ~/ArduinoApps/suokuulo && tar -xf - -C ~/ArduinoApps/suokuulo'
-   ```
+3. Copy the app with `./deploy.sh` (symlinks become files, every file is
+   checked by sha256 on the board, `--restart` restarts the app;
+   `BOARD=arduino@<ip> ./deploy.sh` for another address).
 4. In App Lab open My Apps, SuoKuulo, Run. The first run compiles the sketch,
    installs `python/requirements.txt` and needs internet once. After that
    nothing goes online.
-5. Success looks like: a short beep when the Bridge is up, 7 of 13 columns lit on
-   the bottom two matrix rows (score 50), the App Lab console printing
-   `[birdnet] imports + model load ...` and `[mic] <device> at 48000 Hz`, and the
-   dashboard on `http://<board>.local:7000/`.
+5. Success looks like: one beep when the app is up, the health number on the
+   matrix (0 until a bird is heard in the demo), the log printing
+   `[config] demo.yaml ...`, `[log] events.csv at ...`, `[mic] <device> at
+   48000 Hz`, a `[stats]` line each minute (inference ms, RAM), and the
+   dashboard on `http://<board-ip>:7000/`.
 
-Board config is `config/board.yaml`. To test the board without the mic, set
-`source: file` and `input: <folder of clips copied to the board>`.
+To test the board without the mic, set `source: file` and `input: <folder of
+clips copied to the board>`.
 
 ### Buzzer test
 
@@ -103,17 +133,17 @@ was not found on `Wire1`: reseat the Qwiic cable.
 
 ## Known limits
 
-- Evaluation (`eval_results.md`): indicator birds 60-100 % of clips confirmed.
-  BirdNET's machinery labels are weak: ESC-50 engine 0/10 clips, real-field
-  rfcx/frugalai chainsaws 0 % on `Power tools` (25 % of windows on any
-  disturbance label, mostly `Engine`). See plan B.
-- rfcx/frugalai clips are 3 s, one window, so they cannot pass the 2-of-3 rule.
-- Laptop-speaker to laptop-mic loopback did not confirm a golden plover (max
-  0.18). Room/fan noise scored `Engine` 0.20-0.33, just under the 0.35
-  threshold: watch for false alarms on the board.
-- The sketches have not been compiled here (no `arduino-cli`); App Lab compiles
-  them on first run.
-- Everything marked `TODO(hardware)` in `applab/` is unverified on a real board.
+- Evaluation (`eval_results.md`, laptop): 88 % of bird clips confirmed, median
+  3 s of audio to the first event; ESC-50 chainsaws 9/10, engines 2/10, 0 false
+  alarms on 121 non-machinery clips. rfcx/frugalai chainsaws (3 s, one
+  window) 0/20.
+- Human vocal is confirmed on only 2 of 10 LibriSpeech clips: "People nearby"
+  undercounts quiet read speech.
+- A golden plover played from a phone 25 cm from the board's mic was missed,
+  while the same file scores 0.81-0.98 on the laptop: check the mic path with
+  `verbose: true`.
+- `baseline.yaml` numbers are estimates until the device has learned its own.
+- The sketch is compiled by App Lab on the board, not here.
 
 ## Plan B for machinery: YAMNet
 
