@@ -7,6 +7,29 @@ hourly summary goes out as a 16-byte LoRa payload from the MCU, which also
 watches that the analysis on the Linux side is alive. A local dashboard shows
 the detail to anyone on the same network. No audio leaves the device.
 
+## Why now: EU legal framework
+
+- [Regulation (EU) 2024/1991](https://eur-lex.europa.eu/eli/reg/2024/1991/oj/eng)
+  on nature restoration, in force since 18 August 2024: draft national
+  restoration plans were due by 1 September 2026 (Art. 16), followed by
+  monitoring (Art. 20) and reporting of progress (Art. 21). Peatlands are a
+  core target.
+- Drained peatlands in **agricultural** use (Art. 11(4)): 30 % restored by 2030
+  (at least a quarter of it rewetted), 40 % by 2040, 50 % by 2050. Most Finnish
+  drained peatlands are forestry-drained; rewetting them can count for up to
+  40 % of that target.
+- Natura 2000: every 6 years member states report bird species status
+  ([Birds Directive](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02009L0147-20190626)
+  Art. 12) and habitat status
+  ([Habitats Directive](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:01992L0043-20130701)
+  Art. 17). Birds Directive Annex I includes our golden plover, wood
+  sandpiper, common crane, whooper swan and black grouse (subspecies *Tetrao
+  tetrix tetrix* only). Priority peatland habitats in Habitats Directive
+  Annex I: 7110 active raised bogs, 7310 aapa mires, 7320 palsa mires, 91D0
+  bog woodland. Details in PROJECT_HUB.md.
+
+SuoKuulo does not replace field surveys; it covers the sites and the days where no surveyor is present.
+
 ## How the score works
 
 - **Health (0-100) counts indicator birds.** Over the last hour (10 min in the

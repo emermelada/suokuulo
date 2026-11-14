@@ -87,6 +87,44 @@ reviewed the idea. The station keeps reporting when they leave:
   frequencies every minute. It needs no species and runs all year, shown
   apart from health.
 
+## Why now: EU legal framework
+
+- **Nature Restoration Regulation**, [Regulation (EU) 2024/1991](https://eur-lex.europa.eu/eli/reg/2024/1991/oj/eng),
+  in force since 18 August 2024. Each member state had to submit a draft
+  national restoration plan by 1 September 2026 (Art. 16), and must then
+  monitor the restored areas (Art. 20) and report progress to the Commission
+  (Art. 21: from 30 June 2028, at least every 3 years). Peatlands are one of
+  its core targets.
+- **Drained peatlands in agricultural use** (Art. 11(4)), i.e. cropland and
+  grassland on organic soils: restoration measures on 30 % of that area by
+  2030 (at least a quarter of it rewetted), 40 % by 2040 and 50 % by 2050 (at
+  least a third rewetted). This specific target is for *agricultural*
+  peatlands. Most of Finland's drained peatlands are drained for forestry;
+  rewetting those can count towards the target, up to 40 % of it.
+- **Birds and Habitats Directives, Natura 2000.** Every 6 years member states
+  report the status and trends of bird species
+  ([Birds Directive 2009/147/EC](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:02009L0147-20190626),
+  Art. 12) and the conservation status of habitat types
+  ([Habitats Directive 92/43/EEC](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:01992L0043-20130701),
+  Art. 17).
+  - Our indicators in Annex I of the Birds Directive: golden plover
+    (*Pluvialis apricaria*), wood sandpiper (*Tringa glareola*), common crane
+    (*Grus grus*), whooper swan (*Cygnus cygnus*), and black grouse only as the
+    continental subspecies *Tetrao tetrix tetrix*. Not in Annex I: spotted
+    redshank, curlew, whimbrel, common snipe, meadow pipit, yellow wagtail and
+    willow ptarmigan.
+  - Peatland habitats that are priority types (\*) in Annex I of the Habitats
+    Directive: 7110 \* Active raised bogs, 7310 \* Aapa mires, 7320 \* Palsa
+    mires, 91D0 \* Bog woodland. 7120 Degraded raised bogs still capable of
+    natural regeneration and 7140 Transition mires and quaking bogs are listed
+    but not priority.
+
+Checked on 2026-11-14 against the Official Journal text of the regulation and
+the consolidated directives (Birds Directive as of 26 June 2019, Habitats
+Directive as of 1 July 2013), fetched from the EU Publications Office.
+
+SuoKuulo does not replace field surveys; it covers the sites and the days where no surveyor is present.
+
 ## What is new compared with rainforest acoustic monitoring
 
 Acoustic monitoring of birds is proven in rainforests (Rainforest Connection
