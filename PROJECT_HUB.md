@@ -58,7 +58,7 @@ board specific.
 
 | Part | Notes |
 | --- | --- |
-| Arduino UNO Q | Linux (Qualcomm) + MCU (STM32) on one board |
+| Arduino UNO Q, 2 GB variant | Linux (Qualcomm) + MCU (STM32) on one board; 1.70 GB usable RAM |
 | Arduino USB-C hub | stick-shaped, PD power input |
 | Official Arduino power supply | powers the hub and board |
 | USB microphone | model: TODO |
@@ -86,8 +86,9 @@ Laptop numbers (x86_64, `scripts/evaluate.py`, one clip at a time, details in
 | power_tools (chainsaw) | rfcx/frugalai, 3 s clips | 20 | 0 | 0% (25% of windows hit some disturbance label) |
 | background (negatives) | ESC-50 wind + frugalai environment | 30 | 0 false alarms | |
 
-Inference: about 50-80 ms per 3 s window on the laptop. Board timing: TODO
-(measure on the UNO Q).
+Inference: about 50-110 ms per 3 s window on the laptop. Board timing: TODO
+(measure on the UNO Q). Memory: the whole board app (model, pipeline, web
+server) peaks at 238 MB RSS, measured on the laptop; board RSS: TODO.
 
 Bird detection works. BirdNET's machinery labels are the weak spot; plan B is
 YAMNet beside BirdNET (README).
