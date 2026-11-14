@@ -7,6 +7,7 @@ from suokuulo import config
 from suokuulo.audio import WINDOW, make_source
 from suokuulo.classifier import MockClassifier
 from suokuulo.display import ConsoleDisplay
+from suokuulo.eventlog import EventLog
 from suokuulo.pipeline import Pipeline, simulated
 
 # --mock: one list of (label, confidence) per 3 s window. Score rises, then an
@@ -35,14 +36,15 @@ def main():
 
     if args.mock:
         windows, now = simulated(np.zeros(WINDOW, np.float32) for _ in MOCK_SCRIPT)
-        Pipeline(cfg, species, MockClassifier(MOCK_SCRIPT, species), display, now=now).run(windows)
+        Pipeline(cfg, species, MockClassifier(MOCK_SCRIPT, species), display, now=now,
+                 log=EventLog(cfg.log_file)).run(windows)
         return
 
     if args.input:
         cfg.source, cfg.input = "file", args.input
     from suokuulo.classifier import BirdNetClassifier
     classifier = BirdNetClassifier(species, cfg.min_conf)
-    Pipeline(cfg, species, classifier, display, verbose=args.verbose).run(make_source(cfg).windows())
+    Pipeline(cfg, species, classifier, display, log=EventLog(cfg.log_file), verbose=args.verbose).run(make_source(cfg).windows())
 
 
 if __name__ == "__main__":

@@ -48,9 +48,12 @@ class Pipeline:
             self.display.alarm(self.scorer.alarm)
 
         if self.log:
-            alert = ";".join(a["type"] for a in alerts)
-            for e in events:
-                self.log.write(now_iso, e, score, alert)
+            for e in events:  # every disturbance event raises the disturbance alert
+                self.log.write(now_iso, e.label, e.kind, f"{e.confidence:.3f}", score,
+                               "disturbance" if e.kind == "disturbance" else "")
+            for a in alerts:
+                if a["type"] == "silence":
+                    self.log.write(now_iso, "", "", "", score, "silence")
         if self.state:
             self.state.update(now_iso, events, alerts, score, self.scorer.alarm,
                               self.scorer.species_heard(), inference_ms)
