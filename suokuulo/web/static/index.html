@@ -48,9 +48,10 @@
   /* Species */
   .sp-name b { font-weight: 600; }
   .sp-name i { display: block; color: var(--dim); font-size: .82rem; }
-  tr.missing td { color: var(--faint); }
-  tr.missing .sp-name i, tr.missing .tag { color: var(--faint); }
-  tr.quiet td { color: var(--dim); }
+  /* Three states: heard in the score window (normal), heard today but not in
+     the window (muted), not heard today (greyed). */
+  tr.today td, tr.today .sp-name i { color: var(--dim); }
+  tr.none td, tr.none .sp-name i, tr.none .tag { color: var(--faint); }
   .tag { font-size: .75rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
   .spark { display: block; }
   /* Acoustic index */
@@ -171,8 +172,9 @@ function render(s) {
     : `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min`;
 
   $("species").innerHTML = (s.species || []).map(r => {
-    const cls = r.heard_in_window ? "" : r.expected ? "missing" : "quiet";
-    const tag = r.expected && !r.heard_in_window ? '<span class="tag">expected, not heard</span>' : "";
+    const cls = r.heard_in_window ? "" : r.detections_today ? "today" : "none";
+    const tag = r.heard_in_window ? "" : `<span class="tag">${r.detections_today ? "heard today, not in window"
+      : "not heard today"}${r.expected ? " · expected" : ""}</span>`;
     return `<tr class="${cls}"><td class="sp-name"><b>${esc(r.common)}</b>${tag}<i>${esc(r.latin)}</i></td>
       <td class="n num">${r.detections_today}</td><td class="n num">${r.minutes_today}</td>
       <td class="n num">${ago(r.last_ago_s)}</td><td class="n hide-narrow">${spark(r.hourly, r.heard_in_window || r.detections_today)}</td></tr>`;
