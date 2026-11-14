@@ -29,6 +29,11 @@ test_clips/background/FRUGALAI-test-41.wav,background,rfcx/frugalai (CC BY-NC 4.
 test_clips/background/FRUGALAI-test-6.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 6)
 test_clips/background/FRUGALAI-test-8.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 8)
 test_clips/background/FRUGALAI-test-9.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 9)
+test_clips/black_grouse/XC1006574.mp3,black_grouse,xeno-canto,Lars Edenius,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1006574
+test_clips/black_grouse/XC902549.mp3,black_grouse,xeno-canto,Lars Edenius,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/902549
+test_clips/black_grouse/XC902551.mp3,black_grouse,xeno-canto,Lars Edenius,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/902551
+test_clips/black_grouse/XC987274.mp3,black_grouse,xeno-canto,Dag Österlund,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/987274
+test_clips/black_grouse/XC992926.wav,black_grouse,xeno-canto,Johan Södercrantz,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/992926
 test_clips/common_crane/XC1132982.mp3,common_crane,xeno-canto,Elias A. Ryberg,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1132982
 test_clips/common_crane/XC1142738.mp3,common_crane,xeno-canto,bert de bruin,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1142738
 test_clips/common_crane/XC1152286.wav,common_crane,xeno-canto,Sunny Tseng,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1152286
@@ -130,6 +135,21 @@ test_clips/power_tools/FRUGALAI-test-32.wav,power_tools,rfcx/frugalai (CC BY-NC 
 test_clips/power_tools/FRUGALAI-test-36.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 36)
 test_clips/power_tools/FRUGALAI-test-5.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 5)
 test_clips/power_tools/FRUGALAI-test-7.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 7)
+test_clips/ruff/XC1167426.wav,ruff,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167426
+test_clips/ruff/XC1167434.wav,ruff,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167434
+test_clips/ruff/XC1168400.wav,ruff,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168400
+test_clips/ruff/XC1190953.wav,ruff,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1190953
+test_clips/ruff/XC821333.wav,ruff,xeno-canto,Alan Dalton,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/821333
+test_clips/spotted_redshank/XC1168430.wav,spotted_redshank,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168430
+test_clips/spotted_redshank/XC1168431.wav,spotted_redshank,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168431
+test_clips/spotted_redshank/XC1175012.mp3,spotted_redshank,xeno-canto,Bo Shunqi 薄顺奇,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1175012
+test_clips/spotted_redshank/XC1175175.wav,spotted_redshank,xeno-canto,Xavier Riera,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1175175
+test_clips/spotted_redshank/XC1189439.wav,spotted_redshank,xeno-canto,Julien Birard,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1189439
+test_clips/taiga_bean_goose/XC1048695.wav,taiga_bean_goose,xeno-canto,Ulf Elman,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1048695
+test_clips/taiga_bean_goose/XC1168175.wav,taiga_bean_goose,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168175
+test_clips/taiga_bean_goose/XC1168359.wav,taiga_bean_goose,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168359
+test_clips/taiga_bean_goose/XC940442.wav,taiga_bean_goose,xeno-canto,Hannu Varkki,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/940442
+test_clips/taiga_bean_goose/XC944400.mp3,taiga_bean_goose,xeno-canto,Scott Wotherspoon,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/944400
 test_clips/whimbrel/XC1087260.wav,whimbrel,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1087260
 test_clips/whimbrel/XC1087261.wav,whimbrel,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1087261
 test_clips/whimbrel/XC1148422.wav,whimbrel,xeno-canto,Ulf Elman,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1148422
@@ -140,6 +160,16 @@ test_clips/whimbrel/XC1157162.wav,whimbrel,xeno-canto,Teet Sirotkin,https://crea
 test_clips/whimbrel/XC1167892.wav,whimbrel,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167892
 test_clips/whimbrel/XC840833.wav,whimbrel,xeno-canto,Ray Tsu 诸仁,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/840833
 test_clips/whimbrel/XC841124.wav,whimbrel,xeno-canto,Ray Tsu 诸仁,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/841124
+test_clips/whooper_swan/XC1079343.mp3,whooper_swan,xeno-canto,Marc Anderson,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1079343
+test_clips/whooper_swan/XC1086575.wav,whooper_swan,xeno-canto,Paul Kelly,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1086575
+test_clips/whooper_swan/XC1088588.wav,whooper_swan,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1088588
+test_clips/whooper_swan/XC1088589.wav,whooper_swan,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1088589
+test_clips/whooper_swan/XC1106314.mp3,whooper_swan,xeno-canto,Lennart Jeppsson,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1106314
+test_clips/willow_ptarmigan/XC1167878.wav,willow_ptarmigan,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167878
+test_clips/willow_ptarmigan/XC1167881.wav,willow_ptarmigan,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167881
+test_clips/willow_ptarmigan/XC1167972.wav,willow_ptarmigan,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1167972
+test_clips/willow_ptarmigan/XC1168374.wav,willow_ptarmigan,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168374
+test_clips/willow_ptarmigan/XC1168520.wav,willow_ptarmigan,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168520
 test_clips/wood_sandpiper/XC1168144.wav,wood_sandpiper,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168144
 test_clips/wood_sandpiper/XC1168145.wav,wood_sandpiper,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168145
 test_clips/wood_sandpiper/XC1168146.wav,wood_sandpiper,xeno-canto,Stanislas Wroza,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1168146

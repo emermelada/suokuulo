@@ -11,6 +11,12 @@ species:
   - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator}
   - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator}
   - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator}
+  # Seasonal extension (eval_results.md): migration and winter residents. Taiga
+  # bean goose (2/5 clips) and ruff (0/5) were tested and left out.
+  - {id: whooper_swan,     label: "Cygnus cygnus_Whooper Swan",          kind: indicator}
+  - {id: spotted_redshank, label: "Tringa erythropus_Spotted Redshank",  kind: indicator}
+  - {id: willow_ptarmigan, label: "Lagopus lagopus_Willow Ptarmigan",    kind: indicator}
+  - {id: black_grouse,     label: "Lyrurus tetrix_Black Grouse",         kind: indicator}
   - {id: engine,         label: "Engine_Engine",                              kind: disturbance, group: machinery}
   - {id: power_tools,    label: "Power tools_Power tools",                    kind: disturbance, group: machinery}
   - {id: gun,            label: "Gun_Gun",                                    kind: disturbance, group: gunshot}

@@ -89,7 +89,7 @@ def summary(rows, kind):
     m = {}
     for label in indicators:
         rs = [r for r in rows if r["label"] == label]
-        m[f"{label} clips confirmed"] = f"{sum(label in split(r['confirmed']) for r in rs)}/{len(rs)}"
+        m[f"{label} clips confirmed"] = f"{sum(label in split(r['confirmed']) for r in rs)}/{len(rs)}" if rs else "-"
     birds = [r for r in rows if r["label"] in indicators]
     m["bird clips confirmed (all species)"] = pct(sum(r["label"] in split(r["confirmed"]) for r in birds), len(birds))
     firsts = [float(r["first_s"]) for r in birds if r.get("first_s")]
@@ -127,6 +127,7 @@ def main():
     ap.add_argument("--speech", metavar="DIR", help="overlay speech from DIR on every bird clip")
     ap.add_argument("--mixed", action="store_true", help="overlay every pair of indicator species")
     ap.add_argument("--compare", nargs="*", default=[], metavar="NAME=CSV")
+    ap.add_argument("--notes", help="markdown file appended to the report (hand-written findings)")
     args = ap.parse_args()
     cfg = config.load(args.config)
     for kv in args.set:
@@ -249,6 +250,7 @@ Any-disturbance window rate counts windows where any disturbance label hit.
 
 {chr(10).join(margin)}
 {chr(10).join(sections)}
+{Path(args.notes).read_text() if args.notes else ""}
 ## Caveats
 
 - Clips of 3 s or less (rfcx/frugalai) are a single window: they can only

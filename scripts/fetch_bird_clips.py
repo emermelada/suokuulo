@@ -54,6 +54,7 @@ def main():
     ap.add_argument("--per-species", type=int, default=10)
     ap.add_argument("--species", default="config/species.yaml")
     ap.add_argument("--ids", nargs="*", default=[], help="extra Xeno-canto catalogue numbers")
+    ap.add_argument("--quality-a", action="store_true", help="only quality A recordings")
     args = ap.parse_args()
     key = os.environ.get("XC_API_KEY") or sys.exit("set XC_API_KEY (https://xeno-canto.org/account)")
 
@@ -62,7 +63,7 @@ def main():
             continue
         sci = s.label.split("_")[0]
         picked = {}
-        for extra in QUERIES:
+        for extra in [q for q in QUERIES if "q:A" in q] if args.quality_a else QUERIES:
             for r in search(f'sp:"{sci}" {extra}', key):
                 if len(picked) < args.per_species and r["id"] not in picked:
                     picked[r["id"]] = r
