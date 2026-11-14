@@ -197,3 +197,22 @@ def test_today_summary():
     today = s.snapshot()["today"]
     assert (today["species_heard"], today["expected_heard"], today["expected"], today["detections"]) == (3, 2, 8, 3)
     assert (today["first"][11:16], today["last"][11:16]) == ("05:00", "05:02") and sum(today["hourly"]) == 3
+
+
+def test_month_to_season_mapping():
+    assert [config.season_of(m) for m in range(1, 13)] == \
+        ["winter"] * 2 + ["spring"] * 3 + ["summer"] * 3 + ["autumn"] * 3 + ["winter"]
+    assert config.seasons_present([3, 4, 5, 6, 7, 8, 9, 10]) == \
+        {"spring": True, "summer": True, "autumn": True, "winter": False}
+    assert config.seasons_present([11]) == {"spring": False, "summer": False, "autumn": True, "winter": False}
+    assert all(config.seasons_present(range(1, 13)).values()) and not any(config.seasons_present(None).values())
+    for s in SPECIES:  # every indicator carries its months and a source
+        assert s.kind != "indicator" or (s.months_present and s.source)
+
+
+def test_species_table_expected_now_first():
+    clock = Clock(at(2026, 6, 10, 5, 0))
+    rows = soundscape(clock, baseline_profile="breeding").snapshot()["species"]
+    expected = [r["expected"] for r in rows]
+    assert expected == sorted(expected, reverse=True) and rows[0]["id"] == "golden_plover"
+    assert soundscape(clock, baseline_profile="breeding").snapshot()["season"] == "summer"

@@ -55,6 +55,17 @@
   .tag { display: inline-block; white-space: nowrap; font-size: .75rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
   .spark { display: block; }
   .kv td { padding: 6px 0; }
+  /* Season icons and their tooltip */
+  .seasons { position: relative; display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: -2px; outline: none; }
+  .si { width: 15px; height: 15px; border-radius: 50%; padding: 1px; }
+  .si.now { box-shadow: 0 0 0 1px var(--dim); }
+  .seasons .tip { display: none; position: absolute; z-index: 2; left: 0; top: 22px; width: max-content; max-width: 260px;
+                  background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+                  font-size: .8rem; font-weight: 400; color: var(--text); white-space: normal; }
+  .seasons:hover .tip, .seasons:focus .tip { display: block; }
+  .months { display: flex; gap: 2px; margin-bottom: 6px; }
+  .months span { width: 16px; text-align: center; border-radius: 3px; background: var(--line); color: var(--faint); font-size: .7rem; }
+  .months span.on { background: var(--dim); color: var(--bg); font-weight: 600; }
   /* Acoustic index */
   .index-value { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
   .index-value b { font-size: 1.6rem; }
@@ -154,6 +165,32 @@ function ago(s) {
   return Math.floor(s / 3600) + " h ago";
 }
 
+// Season icons: lit in their colour when the species is on Finnish peatlands
+// that season (months_present in species.yaml), grey outline otherwise; the
+// current season gets a ring. Tooltip (hover, or tap: the span is focusable):
+// the 12 months and whether the active baseline profile expects it now.
+const SEASON_ICONS = {
+  spring: ["#6BCB77", '<path d="M8 15V8"/><path d="M8 9C8 6 6 4 3 4c0 3 2 5 5 5zM8 8c0-3 2-5 5-5 0 3-2 5-5 5z"/>'],
+  summer: ["#F4B400", '<circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/>'],
+  autumn: ["#D2691E", '<path d="M3 13C3 7 7 3 13 3c0 6-4 10-10 10z"/><path d="M3 13l6-6"/>'],
+  winter: ["#8ECAE6", '<path d="M8 1v14M2 4.5l12 7M2 11.5l12-7M6 2l2 2 2-2M6 14l2-2 2 2"/>'],
+};
+let lastRows = "";
+
+function seasonIcons(r, current, profile) {
+  const icons = Object.entries(SEASON_ICONS).map(([name, [color, path]]) => {
+    const on = r.seasons && r.seasons[name];
+    const fill = on && name !== "summer" && name !== "winter" ? color : "none";
+    return `<svg class="si${name === current ? " now" : ""}" viewBox="0 0 16 16" aria-label="${name}${on ? "" : " (absent)"}"
+      fill="${fill}" fill-opacity=".35" stroke="${on ? color : "var(--faint)"}" stroke-width="1.4"
+      stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  }).join("");
+  const months = "JFMAMJJASOND".split("").map((m, i) =>
+    `<span class="${r.months.includes(i + 1) ? "on" : ""}">${m}</span>`).join("");
+  const note = r.expected ? `Expected now in profile: ${esc(profile)}` : "Not expected in the current profile";
+  return `<span class="seasons" tabindex="0">${icons}<span class="tip"><span class="months">${months}</span>${note}</span></span>`;
+}
+
 function spark(hourly, on) {
   const max = Math.max(5, ...hourly), w = 4, gap = 1, h = 22;
   const bars = hourly.map((v, i) => {
@@ -198,14 +235,15 @@ function render(s) {
       return `<rect x="${i * 10}" y="${32 - bh}" width="8" height="${bh}" fill="${v ? "var(--accent)" : "var(--line)"}"/>`;
     }).join("") + "</svg>" : "";
 
-  $("species").innerHTML = (s.species || []).map(r => {
+  const rowsHtml = (s.species || []).map(r => {
     const cls = r.heard_in_window ? "" : r.detections_today ? "today" : "none";
     const tag = r.heard_in_window ? "" : `<span class="tag">${r.detections_today ? "heard today, not in window"
-      : "not heard today"}${r.expected ? " · expected" : ""}</span>`;
-    return `<tr class="${cls}"><td class="sp-name"><b>${esc(r.common)}</b>${tag}<i>${esc(r.latin)}</i></td>
+      : "not heard today"}</span>`;
+    return `<tr class="${cls}"><td class="sp-name"><b>${esc(r.common)}</b>${seasonIcons(r, s.season, h.profile)}${tag}<i>${esc(r.latin)}</i></td>
       <td class="n num">${r.detections_today}</td><td class="n num">${r.minutes_today}</td>
       <td class="n num">${ago(r.last_ago_s)}</td><td class="n hide-narrow">${spark(r.hourly, r.heard_in_window || r.detections_today)}</td></tr>`;
   }).join("");
+  if (rowsHtml !== lastRows) $("species").innerHTML = lastRows = rowsHtml;  // keep a tapped tooltip open
 
   const ai = s.acoustic_index || {};
   const sign = x => x == null ? "--" : (x > 0 ? "+" : "") + x.toFixed(2);

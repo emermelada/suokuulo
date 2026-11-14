@@ -5,7 +5,17 @@ from pathlib import Path
 import yaml
 
 
-VOICE = "human_voice"  # species.yaml id of BirdNET's "Human vocal" label
+VOICE = "human_voice"
+SEASONS = {"spring": (3, 4, 5), "summer": (6, 7, 8), "autumn": (9, 10, 11), "winter": (12, 1, 2)}
+
+
+def season_of(month) -> str:
+    return next(name for name, months in SEASONS.items() if month in months)
+
+
+def seasons_present(months) -> dict:
+    """Season -> True if the species is present in any of its months."""
+    return {name: bool(set(ms) & set(months or ())) for name, ms in SEASONS.items()}  # species.yaml id of BirdNET's "Human vocal" label
 
 
 @dataclass
@@ -14,6 +24,8 @@ class Species:
     label: str     # exact BirdNET label, "Scientific name_Common Name"
     kind: str      # "indicator" | "disturbance"
     group: str = ""  # disturbances: people | machinery | gunshot | other
+    months_present: list | None = None  # indicators: months (1-12) on Finnish peatlands
+    source: str = ""                    # where months_present comes from
 
 
 @dataclass

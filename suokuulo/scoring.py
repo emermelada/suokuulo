@@ -28,6 +28,7 @@ from zoneinfo import ZoneInfo
 import yaml
 
 from .audio import ndsi
+from .config import season_of, seasons_present
 
 ALERT_GROUPS = {"machinery", "gunshot"}  # the only disturbances that raise the alarm
 GROUP_NAMES = {"people": "People nearby", "machinery": "Machinery", "gunshot": "Gunshot", "other": "Other"}
@@ -228,7 +229,8 @@ class Soundscape:
             for m in {int(e[0] // 60) for e in mine if e[0] >= first_hour}:
                 hourly[(m * 60 - first_hour) // 3600] += 1
             latin, common = s.label.split("_", 1)
-            rows.append({"id": s.id, "common": common, "latin": latin,
+            rows.append({"id": s.id, "common": common, "latin": latin, "months": s.months_present or [],
+                         "seasons": seasons_present(s.months_present),
                          "expected": s.id in h["expected"], "heard_in_window": h["observed"][s.id] > 0,
                          "detections_today": len(mine_today), "minutes_today": minutes(mine_today),
                          "first_today": iso(mine_today[0] if mine_today else None),
@@ -241,6 +243,7 @@ class Soundscape:
             return {"time": iso(e), "label": e[1], "name": names.get(e[1], e[1]), "kind": e[2],
                     "group": self.group.get(e[1], ""), "confidence": round(e[3], 2)}
 
+        rows.sort(key=lambda r: not r["expected"])  # expected now first, species.yaml order otherwise
         birds_today = [e for e in today if e[2] == "indicator"]
         heard = {r["id"] for r in rows if r["detections_today"]}
         summary = {"species_heard": len(heard), "expected": len(h["expected"]),
@@ -249,6 +252,7 @@ class Soundscape:
                    "last": iso(birds_today[-1] if birds_today else None),
                    "hourly": [sum(r["hourly"][i] for r in rows) for i in range(24)]}
         snap = {"health": {k: v for k, v in h.items() if k not in ("observed", "expected")},
+                "season": season_of(local.month),
                 "today": summary, "species": rows, "acoustic_index": self.acoustic_index(),
                 "events": [entry(e) for e in self.events[-20:][::-1]]}
         if self.cfg.disturbance_enabled:

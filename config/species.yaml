@@ -1,22 +1,48 @@
 # Labels copied from `python scripts/list_labels.py` output (BirdNET v2.4).
+# months_present: months the species is on Finnish peatlands (dashboard season
+# icons); checked 2026-11-14 against BirdLife Suomi arrival dates, see source.
 # Weights and expected activity per season: baseline.yaml. Disturbance groups
 # (people, machinery, gunshot) set how the dashboard and alerts treat them.
 # Disturbance labels must stay here, or BirdNET's species filter drops them.
 species:
-  - {id: golden_plover,  label: "Pluvialis apricaria_European Golden-Plover", kind: indicator}
-  - {id: wood_sandpiper, label: "Tringa glareola_Wood Sandpiper",             kind: indicator}
-  - {id: common_snipe,   label: "Gallinago gallinago_Common Snipe",           kind: indicator}
-  - {id: curlew,         label: "Numenius arquata_Eurasian Curlew",           kind: indicator}
-  - {id: whimbrel,       label: "Numenius phaeopus_Whimbrel",                 kind: indicator}
-  - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator}
-  - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator}
-  - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator}
+  - {id: golden_plover,  label: "Pluvialis apricaria_European Golden-Plover", kind: indicator,
+     months_present: [3, 4, 5, 6, 7, 8, 9, 10],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 10.3.; departure month from general knowledge, unverified"}
+  - {id: wood_sandpiper, label: "Tringa glareola_Wood Sandpiper",             kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 12.4.; departure month from general knowledge, unverified"}
+  - {id: common_snipe,   label: "Gallinago gallinago_Common Snipe",           kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9, 10],
+     source: "BirdLife Suomi lists rare winter records; Apr-Oct from general knowledge, unverified"}
+  - {id: curlew,         label: "Numenius arquata_Eurasian Curlew",           kind: indicator,
+     months_present: [3, 4, 5, 6, 7, 8, 9],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 18.3.; departure month from general knowledge, unverified"}
+  - {id: whimbrel,       label: "Numenius phaeopus_Whimbrel",                 kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 11.4.; departure month from general knowledge, unverified"}
+  - {id: meadow_pipit,   label: "Anthus pratensis_Meadow Pipit",              kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9, 10],
+     source: "BirdLife Suomi lists rare winter records; Apr-Oct from general knowledge, unverified"}
+  - {id: yellow_wagtail, label: "Motacilla flava_Western Yellow Wagtail",     kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 20.4.; departure month from general knowledge, unverified"}
+  - {id: common_crane,   label: "Grus grus_Common Crane",                     kind: indicator,
+     months_present: [3, 4, 5, 6, 7, 8, 9, 10],
+     source: "BirdLife Suomi lists rare winter records; Mar-Oct from general knowledge, unverified"}
   # Seasonal extension (eval_results.md): migration and winter residents. Taiga
   # bean goose (2/5 clips) and ruff (0/5) were tested and left out.
-  - {id: whooper_swan,     label: "Cygnus cygnus_Whooper Swan",          kind: indicator}
-  - {id: spotted_redshank, label: "Tringa erythropus_Spotted Redshank",  kind: indicator}
-  - {id: willow_ptarmigan, label: "Lagopus lagopus_Willow Ptarmigan",    kind: indicator}
-  - {id: black_grouse,     label: "Lyrurus tetrix_Black Grouse",         kind: indicator}
+  - {id: whooper_swan,     label: "Cygnus cygnus_Whooper Swan",          kind: indicator,
+     months_present: [3, 4, 5, 6, 7, 8, 9, 10, 11],
+     source: "BirdLife Suomi: some winter on open water; Mar-Nov on mires from general knowledge, unverified"}
+  - {id: spotted_redshank, label: "Tringa erythropus_Spotted Redshank",  kind: indicator,
+     months_present: [4, 5, 6, 7, 8, 9],
+     source: "BirdLife Suomi median first record (birdlife.fi/havainnot/muuttolintujen-saapuminen) 17.4.; departure month from general knowledge, unverified"}
+  - {id: willow_ptarmigan, label: "Lagopus lagopus_Willow Ptarmigan",    kind: indicator,
+     months_present: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+     source: "resident; BirdLife Suomi classes it as wintering"}
+  - {id: black_grouse,     label: "Lyrurus tetrix_Black Grouse",         kind: indicator,
+     months_present: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+     source: "resident; BirdLife Suomi classes it as wintering"}
   - {id: engine,         label: "Engine_Engine",                              kind: disturbance, group: machinery}
   - {id: power_tools,    label: "Power tools_Power tools",                    kind: disturbance, group: machinery}
   - {id: gun,            label: "Gun_Gun",                                    kind: disturbance, group: gunshot}
