@@ -68,10 +68,14 @@ class MicSource:
             cmd = ["arecord", "-q", "-t", "raw", "-f", "S16_LE", "-r", "48000", "-c", "1"]
             if self.device is not None:
                 cmd += ["-D", str(self.device)]
-            with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            try:
                 while len(buf := proc.stdout.read(WINDOW * 2)) == WINDOW * 2:
                     yield np.frombuffer(buf, np.int16).astype(np.float32) / 32768
                 raise RuntimeError(f"arecord exited with code {proc.wait()}")
+            finally:
+                proc.terminate()
+                proc.wait()
         import sounddevice as sd
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32", device=self.device) as stream:
             while True:
