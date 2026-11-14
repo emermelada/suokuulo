@@ -35,8 +35,8 @@ def update_credits(rows, path="credits.csv"):
         w.writerows(sorted(existing.values(), key=lambda r: r["file"]))
 
 
-def get(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "SuoKuulo/0.1 (Junction 2026)"})
+def get(url, headers=None):
+    req = urllib.request.Request(url, headers={"User-Agent": "SuoKuulo/0.1 (Junction 2026)", **(headers or {})})
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
 

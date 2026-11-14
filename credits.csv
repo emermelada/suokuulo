@@ -9,6 +9,26 @@ test_clips/background/ESC50-1-51037-A-16.wav,background,ESC-50 (CC BY-NC 3.0),do
 test_clips/background/ESC50-1-69760-A-16.wav,background,ESC-50 (CC BY-NC 3.0),Benboncan,CC-BY,http://www.freesound.org/people/Benboncan/sounds/69760/
 test_clips/background/ESC50-2-104952-A-16.wav,background,ESC-50 (CC BY-NC 3.0),Glaneur de sons,CC-BY,http://www.freesound.org/people/Glaneur%20de%20sons/sounds/104952/
 test_clips/background/ESC50-2-104952-B-16.wav,background,ESC-50 (CC BY-NC 3.0),Glaneur de sons,CC-BY,http://www.freesound.org/people/Glaneur%20de%20sons/sounds/104952/
+test_clips/background/FRUGALAI-test-0.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 0)
+test_clips/background/FRUGALAI-test-12.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 12)
+test_clips/background/FRUGALAI-test-13.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 13)
+test_clips/background/FRUGALAI-test-14.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 14)
+test_clips/background/FRUGALAI-test-20.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 20)
+test_clips/background/FRUGALAI-test-21.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 21)
+test_clips/background/FRUGALAI-test-22.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 22)
+test_clips/background/FRUGALAI-test-23.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 23)
+test_clips/background/FRUGALAI-test-24.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 24)
+test_clips/background/FRUGALAI-test-28.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 28)
+test_clips/background/FRUGALAI-test-33.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 33)
+test_clips/background/FRUGALAI-test-34.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 34)
+test_clips/background/FRUGALAI-test-35.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 35)
+test_clips/background/FRUGALAI-test-37.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 37)
+test_clips/background/FRUGALAI-test-4.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 4)
+test_clips/background/FRUGALAI-test-40.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 40)
+test_clips/background/FRUGALAI-test-41.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 41)
+test_clips/background/FRUGALAI-test-6.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 6)
+test_clips/background/FRUGALAI-test-8.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 8)
+test_clips/background/FRUGALAI-test-9.wav,background,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 9)
 test_clips/common_crane/XC1132982.mp3,common_crane,xeno-canto,Elias A. Ryberg,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1132982
 test_clips/common_crane/XC1142738.mp3,common_crane,xeno-canto,bert de bruin,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1142738
 test_clips/common_crane/XC1152286.wav,common_crane,xeno-canto,Sunny Tseng,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1152286
@@ -79,6 +99,26 @@ test_clips/power_tools/ESC50-1-64398-A-41.wav,power_tools,ESC-50 (CC BY-NC 3.0),
 test_clips/power_tools/ESC50-1-64398-B-41.wav,power_tools,ESC-50 (CC BY-NC 3.0),Benboncan,CC-BY,http://www.freesound.org/people/Benboncan/sounds/64398/
 test_clips/power_tools/ESC50-2-50667-A-41.wav,power_tools,ESC-50 (CC BY-NC 3.0),BoilingSand,CC-BY,http://www.freesound.org/people/BoilingSand/sounds/50667/
 test_clips/power_tools/ESC50-2-50667-B-41.wav,power_tools,ESC-50 (CC BY-NC 3.0),BoilingSand,CC-BY,http://www.freesound.org/people/BoilingSand/sounds/50667/
+test_clips/power_tools/FRUGALAI-test-1.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 1)
+test_clips/power_tools/FRUGALAI-test-10.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 10)
+test_clips/power_tools/FRUGALAI-test-11.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 11)
+test_clips/power_tools/FRUGALAI-test-15.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 15)
+test_clips/power_tools/FRUGALAI-test-16.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 16)
+test_clips/power_tools/FRUGALAI-test-17.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 17)
+test_clips/power_tools/FRUGALAI-test-18.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 18)
+test_clips/power_tools/FRUGALAI-test-19.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 19)
+test_clips/power_tools/FRUGALAI-test-2.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 2)
+test_clips/power_tools/FRUGALAI-test-25.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 25)
+test_clips/power_tools/FRUGALAI-test-26.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 26)
+test_clips/power_tools/FRUGALAI-test-27.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 27)
+test_clips/power_tools/FRUGALAI-test-29.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 29)
+test_clips/power_tools/FRUGALAI-test-3.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 3)
+test_clips/power_tools/FRUGALAI-test-30.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 30)
+test_clips/power_tools/FRUGALAI-test-31.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 31)
+test_clips/power_tools/FRUGALAI-test-32.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 32)
+test_clips/power_tools/FRUGALAI-test-36.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 36)
+test_clips/power_tools/FRUGALAI-test-5.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 5)
+test_clips/power_tools/FRUGALAI-test-7.wav,power_tools,rfcx/frugalai (CC BY-NC 4.0),Rainforest Connection,CC BY-NC 4.0,https://huggingface.co/datasets/rfcx/frugalai (test row 7)
 test_clips/whimbrel/XC1087260.wav,whimbrel,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1087260
 test_clips/whimbrel/XC1087261.wav,whimbrel,xeno-canto,Petter Westberg,https://creativecommons.org/licenses/by-nc-sa/4.0/,https://xeno-canto.org/1087261
 test_clips/whimbrel/XC1148422.wav,whimbrel,xeno-canto,Ulf Elman,https://creativecommons.org/licenses/by-nc-nd/4.0/,https://xeno-canto.org/1148422

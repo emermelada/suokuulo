@@ -1,11 +1,12 @@
 """Laptop entrypoint. See README.md for the commands."""
 import argparse
+import itertools
 import sys
 
 import numpy as np
 
 from suokuulo import config
-from suokuulo.audio import WINDOW, make_source
+from suokuulo.audio import WINDOW, FileSource, make_source
 from suokuulo.classifier import MockClassifier
 from suokuulo.display import ConsoleDisplay
 from suokuulo.eventlog import EventLog
@@ -29,6 +30,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="config/laptop.yaml")
     ap.add_argument("--mock", action="store_true", help="scripted detections, no model, no audio")
+    ap.add_argument("--demo", action="store_true", help="play the config's demo playlist in real time")
     ap.add_argument("--input", help="override audio file/folder")
     ap.add_argument("--realtime", action="store_true", help="pace file replay at one window per 3 s")
     ap.add_argument("--loop", action="store_true", help="loop file replay forever")
@@ -65,8 +67,13 @@ def main():
     state = None if args.no_web else State()
     if state:
         serve(state, cfg.web_host, cfg.web_port)
+    if args.demo:
+        windows = itertools.chain.from_iterable(
+            itertools.islice(FileSource(path, realtime=True).windows(), n) for path, n in cfg.demo)
+    else:
+        windows = make_source(cfg).windows()
     Pipeline(cfg, species, classifier, display, state=state, log=EventLog(cfg.log_file),
-             verbose=args.verbose).run(make_source(cfg).windows(), mute=cfg.mute)
+             verbose=args.verbose).run(windows, mute=cfg.mute)
 
 
 if __name__ == "__main__":
