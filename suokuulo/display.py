@@ -4,6 +4,8 @@ from typing import Protocol
 class Display(Protocol):
     def show_score(self, score: int) -> None: ...  # health 0..100, -1 = none (off season)
     def beep(self) -> None: ...                     # startup beep, the buzzer's only sound
+    def uplink(self, health: int, richness: int, activity: int, species_mask: int, detections: int) -> None: ...
+                                                    # hourly summary; the MCU encodes and transmits it
 
 
 class ConsoleDisplay:
@@ -20,3 +22,7 @@ class ConsoleDisplay:
 
     def beep(self):
         print("  [display] [BEEP]")
+
+    def uplink(self, health, richness, activity, species_mask, detections):
+        print(f"  [uplink] health {health} richness {richness}% activity {activity}% "
+              f"species {species_mask:#06x} detections {detections}")

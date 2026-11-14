@@ -5,3 +5,4 @@ include: board.yaml
 site_name: Junction 2026 demo bog
 baseline_profile: breeding
 score_window_min: 10
+uplink_interval_s: 300      # field: 3600

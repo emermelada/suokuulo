@@ -1,11 +1,19 @@
 // SuoKuulo MCU sketch: LED matrix + Modulino Buzzer, driven over the Bridge.
 //
 // Matrix (13 x 8): soundscape health only, as digits (3x5 font, rows 0-4,
-// columns 0-10) and a bar (row 7, columns 0-10).
+// columns 0-10) and a bar (row 7, columns 0-10); a small TX block (columns
+// 11-12, rows 0-2) for 3 s after each uplink.
+//
+// Uplink: Linux sends a summary every hour; this side packs it into the
+// 16-byte payload of payload.h and transmits it. radioSend() is where an
+// SX1276/RFM95 driver goes; with no module the payload is printed as hex on
+// the MCU serial (Monitor) instead.
 //
 // Bridge functions (called from python/main.py):
 //   show_score(int 0..100)  health; -1 = no score (off season), shown as "--"
 //   beep(int)               startup beep, the buzzer's only sound
+//   summary(health, richness %, activity %, species mask, detections today)
+//                           all int; health -1 = no score
 //
 // Bridge handlers run on a separate thread from loop() (RouterBridge README).
 // They only store values in volatile variables; loop() does every matrix and
@@ -15,9 +23,13 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_Modulino.h>
 
+#include "payload.h"
+
 const int ROWS = 8, COLS = 13;
 const uint8_t DIGIT_LEVEL = 4, BAR_LEVEL = 2;  // grayscale 0..7
 const int BEEP_HZ = 1000, BEEP_MS = 120;
+const uint8_t TX_LEVEL = 3;
+const unsigned long TX_ICON_MS = 3000;
 
 // 3x5 digits, one byte per row, bit 2 = left column. Index 10 = "-".
 const uint8_t FONT[11][5] = {
@@ -32,12 +44,49 @@ ModulinoBuzzer buzzer;
 // Written by Bridge handlers, read by loop().
 volatile int score = -1;           // -1 = no score yet / off season
 volatile bool beepRequest = false;
+volatile bool summaryPending = false;
+Summary incoming;                  // filled by summary(), copied by loop()
 
 // Owned by loop().
 uint8_t frame[ROWS * COLS], shown[ROWS * COLS];
+Summary last;                      // latest summary, reused by later payloads
+uint8_t seq = 0;
+unsigned long txAt = 0;
+bool txShown = false;
 
 void show_score(int s) { score = s < 0 ? -1 : constrain(s, 0, 100); }
 void beep(int) { beepRequest = true; }
+void summary(int health, int richness, int activity, int mask, int detections) {
+  incoming.health = health < 0 ? 255 : constrain(health, 0, 100);
+  incoming.richness = constrain(richness, 0, 100);
+  incoming.activity = constrain(activity, 0, 100);
+  incoming.speciesMask = mask & 0xffff;
+  incoming.detections = constrain(detections, 0, 65535);
+  summaryPending = true;  // set last: loop() copies incoming after seeing it
+}
+
+// Transmit hook. Returns true if a radio took the packet.
+// TODO(hardware): with an SX1276/RFM95 on SPI, e.g. RadioLib:
+//   SX1276 radio = new Module(NSS, DIO0, RESET, DIO1);  radio.begin(868.0);
+//   return radio.transmit(buf, len) == RADIOLIB_ERR_NONE;
+bool radioSend(const uint8_t *buf, size_t len) {
+  (void)buf;
+  (void)len;
+  return false;  // no LoRa module attached
+}
+
+void transmit(uint8_t type, uint8_t flags, uint32_t sinceHeartbeatMin) {
+  uint8_t buf[PAYLOAD_LEN];
+  size_t n = encodePayload(buf, type, flags, last, millis() / 1000,
+                           sinceHeartbeatMin > 65535 ? 65535 : sinceHeartbeatMin, seq++);
+  bool sent = radioSend(buf, n);
+  char hex[2 * PAYLOAD_LEN + 1];
+  for (size_t i = 0; i < n; i++) snprintf(hex + 2 * i, 3, "%02x", buf[i]);
+  Monitor.print(sent ? "[uplink] sent " : "[uplink] no radio, payload ");
+  Monitor.println(hex);
+  txAt = millis();
+  txShown = true;
+}
 
 void setup() {
   matrix.begin();
@@ -53,6 +102,7 @@ void setup() {
   Monitor.println(haveBuzzer ? "buzzer found" : "buzzer NOT found on Qwiic (Wire1)");
   Bridge.provide("show_score", show_score);
   Bridge.provide("beep", beep);
+  Bridge.provide("summary", summary);
 }
 
 // Draws glyph g of FONT with its left column at col.
@@ -76,6 +126,9 @@ void render() {
     int lit = (s * 11 + 50) / 100;
     for (int c = 0; c < lit; c++) frame[7 * COLS + c] = BAR_LEVEL;
   }
+  if (txShown)
+    for (int r = 0; r < 3; r++)
+      for (int c = 11; c < COLS; c++) frame[r * COLS + c] = TX_LEVEL;
   if (memcmp(frame, shown, sizeof(frame)) != 0) {
     matrix.draw(frame);
     memcpy(shown, frame, sizeof(frame));
@@ -83,9 +136,16 @@ void render() {
 }
 
 void loop() {
+  unsigned long now = millis();
   if (beepRequest) {
     beepRequest = false;
     buzzer.tone(BEEP_HZ, BEEP_MS);  // one I2C write; the module times the note
   }
+  if (summaryPending) {
+    summaryPending = false;
+    last = incoming;
+    transmit(TYPE_SUMMARY, FLAG_LINUX_OK, 0);
+  }
+  if (txShown && now - txAt >= TX_ICON_MS) txShown = false;
   render();
 }

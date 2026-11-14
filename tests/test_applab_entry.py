@@ -70,7 +70,9 @@ def test_board_entrypoint_wiring(monkeypatch, rate):
     finally:
         log.unlink(missing_ok=True)
     assert calls[0] == ("beep", 1)  # startup beep, the buzzer's only sound
-    assert {c[0] for c in calls} == {"beep", "show_score"}
+    assert {c[0] for c in calls} == {"beep", "show_score", "summary"}
+    summary = next(c for c in calls if c[0] == "summary")  # sent once at start: nothing heard yet
+    assert summary == ("summary", 0, 0, 0, 0, 0)
     scores = [c[1] for c in calls if c[0] == "show_score"]
     assert scores[0] == 0 and scores[-1] > 0  # nothing heard yet, then the plover raises health
     state = api["GET", "/api/state"]()

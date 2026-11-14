@@ -63,6 +63,7 @@ class Config:
     site_name: str = ""
     headline_species: str = "golden_plover"  # gets the double chirp
     buzzer_startup: bool = True               # one beep when the app starts; the buzzer does nothing else
+    uplink_interval_s: float = 3600           # summary to the MCU for the LoRa uplink (also sent at start)
     log_file: str = "events.csv"
     verbose: bool = False                     # print raw detections for every window
     web_host: str = "0.0.0.0"

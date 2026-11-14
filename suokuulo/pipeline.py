@@ -20,6 +20,8 @@ class Pipeline:
         self.soundscape = Soundscape(cfg, species, now, log.path if log else None)
         self.windows, self.inference_ms, self.stats_at = 0, [], now()
         self.score, self.started = None, False
+        self.uplink_at = None
+        self.indicators = [s.id for s in species if s.kind == "indicator"]  # payload bit order
 
     def step(self, window, sample_rate=SAMPLE_RATE):
         t0 = time.perf_counter()
@@ -61,9 +63,22 @@ class Pipeline:
             ram = memory()
             ram = f"board {ram['used_mb']}/{ram['total_mb']} MB used, app {ram['app_mb']} MB" if ram else "n/a"
             print(f"[stats] inference {mean_ms:.0f} ms/window (mean of last {len(self.inference_ms)}), RAM {ram}")
+        snap = self.soundscape.snapshot()
+        if t - self.uplink_at >= self.cfg.uplink_interval_s:
+            self.uplink_at = t
+            self.send_uplink(snap)
         if self.state:
-            self.state.update(self.soundscape.snapshot(), mean_ms)
+            self.state.update(snap, mean_ms)
         return events
+
+    def send_uplink(self, snap):
+        """Hourly summary for the MCU, which packs it into the LoRa payload."""
+        h, today = snap["health"], snap["today"]
+        mask = sum(1 << i for i, sid in enumerate(self.indicators)
+                   if any(r["id"] == sid and r["detections_today"] for r in snap["species"]))
+        pct = lambda x: 0 if x is None else round(100 * x)  # noqa: E731
+        self.display.uplink(-1 if h["score"] is None else h["score"], pct(h["richness"]), pct(h["activity"]),
+                            mask, min(today["detections"], 65535))
 
     def show_score(self, score):
         if score != self.score or not self.started:
@@ -75,6 +90,8 @@ class Pipeline:
             if self.cfg.buzzer_startup:
                 self.display.beep()
             self.show_score(self.soundscape.health()["score"])
+            self.uplink_at = self.now()  # one summary at start, so the office sees the boot
+            self.send_uplink(self.soundscape.snapshot())
             self.started = True
             if self.state:
                 self.state.update(self.soundscape.snapshot())
