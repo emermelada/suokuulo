@@ -6,6 +6,8 @@ from typing import Protocol
 
 import numpy as np
 
+from .audio import highpass_gain
+
 
 @dataclass
 class Detection:
@@ -37,9 +39,12 @@ class BirdNetClassifier:
     second (location) model, ~95 MB of RAM we never use. Same maths as
     birdnetlib's Analyzer: sigmoid(clip(logit, -15, 15)). No lat/lon/date
     filter, only our species list.
+
+    BirdNET is multi-label (one sigmoid per label): every label in our list is
+    scored on every window and returned if above min_conf, never just the top one.
     """
 
-    def __init__(self, species, min_conf=0.1):
+    def __init__(self, species, min_conf=0.1, highpass_hz=0):
         t0 = time.perf_counter()
         try:
             from ai_edge_litert.interpreter import Interpreter
@@ -57,12 +62,15 @@ class BirdNetClassifier:
         self.output = self.interpreter.get_output_details()[0]["index"]  # [1, 6522] logits
         self.species, self.min_conf = species, min_conf
         self.columns = np.array([labels.index(s.label) for s in species])
+        self.highpass = highpass_gain(highpass_hz) if highpass_hz else None
         self.load_s = time.perf_counter() - t0
         print(f"[birdnet] imports + model load {self.load_s:.2f} s")
 
     def classify(self, window, sample_rate):
         if sample_rate != 48000 or window.shape != (144000,):
             raise ValueError(f"BirdNET needs 3 s at 48 kHz, got {window.shape} at {sample_rate} Hz")
+        if self.highpass is not None:
+            window = np.fft.irfft(np.fft.rfft(window) * self.highpass, len(window))
         self.interpreter.set_tensor(self.input, window.astype(np.float32, copy=False)[None])
         self.interpreter.invoke()
         logits = self.interpreter.get_tensor(self.output)[0, self.columns]

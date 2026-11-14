@@ -150,3 +150,10 @@ def test_overlapping_windows():
     stream = list(rechunk((y[i:i + 1000] for i in range(0, len(y), 1000)), hop))
     assert len(stream) == 2 and all((a == b).all() for a, b in zip(stream, file_windows))
     assert [len(w) for w in split_windows(y)] == [WINDOW, WINDOW]  # default hop: old behaviour
+
+
+def test_every_label_in_a_window_is_judged_on_its_own():
+    clock = Clock()
+    s = Smoother(Config(), clock)
+    window = [bird(), bird("curlew", 0.6), noise("human_voice", 0.5)]
+    assert set(feed(s, clock, [window, window])[1]) == {"golden_plover", "curlew", "human_voice"}

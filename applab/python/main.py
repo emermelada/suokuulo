@@ -80,7 +80,7 @@ def main():
     # TODO(hardware): open http://<board-ip>:7000/ from the laptop; check /api/state returns JSON.
     ui.expose_api("GET", "/api/state", state.snapshot)
 
-    classifier = BirdNetClassifier(species, cfg.min_conf)
+    classifier = BirdNetClassifier(species, cfg.min_conf, cfg.highpass_hz)
     source = AppLabMicSource(cfg.device, cfg.hop_s) if cfg.source == "applab" else make_source(cfg)
     pipeline = Pipeline(cfg, species, classifier, BridgeDisplay(), state=state, log=EventLog(cfg.log_file),
                         verbose=cfg.verbose)

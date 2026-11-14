@@ -63,7 +63,7 @@ def main():
     cfg.realtime |= args.realtime
     cfg.loop |= args.loop
     from suokuulo.classifier import BirdNetClassifier
-    classifier = BirdNetClassifier(species, cfg.min_conf)
+    classifier = BirdNetClassifier(species, cfg.min_conf, cfg.highpass_hz)
     state = None if args.no_web else State()
     if state:
         serve(state, cfg.web_host, cfg.web_port)

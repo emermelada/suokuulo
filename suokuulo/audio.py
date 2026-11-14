@@ -36,6 +36,14 @@ def rechunk(chunks, hop=WINDOW) -> Iterator[np.ndarray]:
             buf = buf[hop:]
 
 
+def highpass_gain(hz, n=WINDOW, order=2):
+    """Butterworth-shaped magnitude (12 dB/octave at order 2) for np.fft.rfft of n
+    samples. Applied in the frequency domain it is zero-phase and needs no scipy."""
+    f = np.fft.rfftfreq(n, 1 / SAMPLE_RATE)
+    with np.errstate(divide="ignore"):
+        return 1 / np.sqrt(1 + (hz / f) ** (2 * order))
+
+
 def resample(y: np.ndarray, rate: int) -> np.ndarray:
     """To 48 kHz with soxr (what librosa uses inside, without librosa's ~70 MB of imports)."""
     if rate == SAMPLE_RATE:

@@ -5,6 +5,9 @@ from pathlib import Path
 import yaml
 
 
+VOICE = "human_voice"  # species.yaml id of BirdNET's "Human vocal" label
+
+
 @dataclass
 class Species:
     id: str        # our internal id, e.g. "golden_plover"
@@ -24,6 +27,7 @@ class Config:
     # classifier
     classifier: str = "birdnet"   # birdnet | mock
     min_conf: float = 0.1         # BirdNET's own floor; our thresholds are below
+    highpass_hz: float = 1000     # high-pass before inference (speech, wind, hum); 0 = off
     species_file: str = "species.yaml"  # relative to the config file
     # detection (section 7)
     hop_s: float = 3.0                # a 3 s window every hop_s seconds; < 3 overlaps them
