@@ -25,7 +25,7 @@ from suokuulo.pipeline import simulated  # noqa: E402
 
 def run_clip(path, classifier, cfg, timings):
     """Return (windows, set of confirmed labels, per-label count of hit windows)."""
-    windows, now = simulated(FileSource(path).windows())
+    windows, now = simulated(FileSource(path, hop_s=cfg.hop_s).windows(), step_s=cfg.hop_s)
     smoother = Smoother(cfg, now)
     confirmed, hit_windows, n = set(), defaultdict(int), 0
     for w in windows:

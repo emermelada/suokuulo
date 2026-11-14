@@ -26,11 +26,13 @@ class Config:
     min_conf: float = 0.1         # BirdNET's own floor; our thresholds are below
     species_file: str = "species.yaml"  # relative to the config file
     # detection (section 7)
+    hop_s: float = 3.0                # a 3 s window every hop_s seconds; < 3 overlaps them
     indicator_hit: float = 0.50
     disturbance_hit: float = 0.35
     species_hit: dict | None = None   # per-label overrides, e.g. {golden_plover: 0.35}
     hits_needed: int = 2
     hit_window: int = 3
+    confirm_single: float | None = None  # one window at or above this also confirms
     cooldown_s: float = 30
     # score and alerts
     base_score: int = 50

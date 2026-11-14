@@ -126,3 +126,27 @@ def test_silence_alert_once():
     assert eng.update([]) == [{"type": "silence", "label": ""}]
     clock.t = 1900
     assert eng.update([]) == []
+
+
+def test_single_strong_window_confirms():
+    clock = Clock()
+    s = Smoother(Config(hit_window=2, confirm_single=0.70), clock)
+    assert feed(s, clock, [[bird(c=0.69)], [], [bird(c=0.70)]], step=2.0) == [[], [], ["golden_plover"]]
+
+
+def test_two_consecutive_windows_confirm():
+    clock = Clock()
+    s = Smoother(Config(hit_window=2, confirm_single=0.70), clock)
+    assert feed(s, clock, [[bird(c=0.6)], [], [bird(c=0.6)], [bird(c=0.6)]], step=2.0) == [[], [], [], ["golden_plover"]]
+
+
+def test_overlapping_windows():
+    from suokuulo.audio import WINDOW, rechunk, split_windows
+    import numpy as np
+    y = np.arange(5 * 48000, dtype=np.float32)  # 5 s
+    hop = 2 * 48000
+    file_windows = list(split_windows(y, hop))
+    assert [w[0] for w in file_windows] == [0, hop]  # 0-3 s, 2-5 s: no padding needed
+    stream = list(rechunk((y[i:i + 1000] for i in range(0, len(y), 1000)), hop))
+    assert len(stream) == 2 and all((a == b).all() for a, b in zip(stream, file_windows))
+    assert [len(w) for w in split_windows(y)] == [WINDOW, WINDOW]  # default hop: old behaviour

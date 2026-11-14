@@ -9,6 +9,14 @@ web_port: 7000        # App Lab WebUI brick port (brick_config.yaml declares 700
 mute: false
 verbose: true         # raw detections per window in the App Lab log, for live tuning
 
-# Detection. Golden plover has weight 3; its lower threshold is checked against
+# Detection: 3 s windows every 2 s (1 s overlap). A label confirms on 2
+# consecutive windows, or on one window at >= 0.70; then 30 s cooldown per label
+# (the first event of a label is never delayed).
+hop_s: 2.0
+hits_needed: 2
+hit_window: 2
+confirm_single: 0.70
+cooldown_s: 30
+# Golden plover has weight 3; its lower threshold is checked against
 # false confirmations on every other clip in eval_results.md.
 species_hit: {golden_plover: 0.35}

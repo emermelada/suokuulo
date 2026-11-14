@@ -1,4 +1,5 @@
-"""Per-label smoothing: k hits in the last n windows confirms, then a cooldown."""
+"""Per-label smoothing: k hits in the last n windows (or one strong window)
+confirms, then a cooldown. The first confirmation of a label is never delayed."""
 import time
 from collections import deque
 
@@ -11,6 +12,7 @@ class Smoother:
         self.threshold = {"indicator": cfg.indicator_hit, "disturbance": cfg.disturbance_hit}
         self.label_hit = cfg.species_hit or {}
         self.n, self.k, self.cooldown = cfg.hit_window, cfg.hits_needed, cfg.cooldown_s
+        self.single = cfg.confirm_single or float("inf")
         self.history = {}   # label -> deque of hit confidences, 0.0 = miss
         self.kind = {}
         self.last = {}      # label -> time of last confirmation
@@ -30,7 +32,8 @@ class Smoother:
         events = []
         for label, h in self.history.items():
             h.append(best[label].confidence if label in best else 0.0)
-            if sum(c > 0 for c in h) >= self.k and t - self.last.get(label, -1e18) >= self.cooldown:
+            confirmed = sum(c > 0 for c in h) >= self.k or h[-1] >= self.single
+            if confirmed and t - self.last.get(label, -1e18) >= self.cooldown:
                 self.last[label] = t
                 events.append(Detection(label, self.kind[label], max(h)))
         return events

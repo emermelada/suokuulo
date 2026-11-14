@@ -68,7 +68,7 @@ class Pipeline:
 
 
 def simulated(windows, step_s=3.0):
-    """Wrap a window iterator with a fake clock that advances step_s per window.
+    """Wrap a window iterator with a fake clock that advances step_s (the hop) per window.
 
     Returns (windows, now). Lets replays and evaluation run at full speed while
     cooldowns and expiry still see audio time.

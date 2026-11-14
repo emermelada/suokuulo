@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from suokuulo import config  # noqa: E402
-from suokuulo.audio import SAMPLE_RATE, WINDOW, make_source  # noqa: E402
+from suokuulo.audio import SAMPLE_RATE, make_source, rechunk  # noqa: E402
 from suokuulo.classifier import BirdNetClassifier  # noqa: E402
 from suokuulo.eventlog import EventLog  # noqa: E402
 from suokuulo.pipeline import Pipeline  # noqa: E402
@@ -49,11 +49,12 @@ class BridgeDisplay:
 
 class AppLabMicSource:
     """USB mic through App Lab's Microphone peripheral (arecord/PortAudio may not
-    be visible in the app container). Re-chunks its stream into 3 s windows."""
+    be visible in the app container). Re-chunks its stream into 3 s windows every hop_s."""
     sample_rate = SAMPLE_RATE
 
-    def __init__(self, device=None):
+    def __init__(self, device=None, hop_s=3.0):
         self.device = Microphone.USB_MIC_1 if device is None else device
+        self.hop = int(hop_s * SAMPLE_RATE)
 
     def windows(self):
         mic = Microphone(device=self.device, sample_rate=SAMPLE_RATE, channels=1, format="float32")
@@ -64,13 +65,8 @@ class AppLabMicSource:
         if rate != SAMPLE_RATE:  # streaming, so no clicks at chunk edges
             import soxr
             resampler = soxr.ResampleStream(rate, SAMPLE_RATE, 1, dtype="float32")
-        buf = np.zeros(0, np.float32)
-        for chunk in mic.stream():
-            x = chunk.reshape(-1).astype(np.float32)
-            buf = np.concatenate([buf, resampler.resample_chunk(x) if resampler else x])
-            while len(buf) >= WINDOW:
-                w, buf = buf[:WINDOW], buf[WINDOW:]
-                yield w
+        chunks = (chunk.reshape(-1).astype(np.float32) for chunk in mic.stream())
+        yield from rechunk((resampler.resample_chunk(x) for x in chunks) if resampler else chunks, self.hop)
 
 
 def main():
@@ -85,7 +81,7 @@ def main():
     ui.expose_api("GET", "/api/state", state.snapshot)
 
     classifier = BirdNetClassifier(species, cfg.min_conf)
-    source = AppLabMicSource(cfg.device) if cfg.source == "applab" else make_source(cfg)
+    source = AppLabMicSource(cfg.device, cfg.hop_s) if cfg.source == "applab" else make_source(cfg)
     pipeline = Pipeline(cfg, species, classifier, BridgeDisplay(), state=state, log=EventLog(cfg.log_file),
                         verbose=cfg.verbose)
     # App.run calls user_loop forever: if the mic stream ends, the pipeline restarts.

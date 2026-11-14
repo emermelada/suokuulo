@@ -14,16 +14,16 @@ from suokuulo.pipeline import Pipeline, simulated
 from suokuulo.state import State
 from suokuulo.web.server import serve
 
-# --mock: one list of (label, confidence) per 3 s window. Score rises, then an
-# engine trips the alarm, which clears 20 s after the last engine hit.
+# --mock: one list of (label, confidence) per window (one window per hop_s).
+# Score rises, then an engine trips the alarm, which clears 20 s after the last
+# engine hit.
 MOCK_SCRIPT = [
     [], [], [],
-    [("golden_plover", 0.81)], [("golden_plover", 0.77)],
-    [("common_snipe", 0.66)], [], [("common_snipe", 0.58)],
-    [("engine", 0.30)],                       # below threshold, not a hit
+    [("golden_plover", 0.81)],                         # one window >= 0.70 confirms at once
+    [("common_snipe", 0.66)], [("common_snipe", 0.58)],  # two consecutive hits confirm
+    [("engine", 0.15)],                                # below threshold, not a hit
     [("engine", 0.62)], [("engine", 0.71)],
-    [], [], [], [], [], [], [], [], [],
-]
+] + [[]] * 12
 
 
 def main():
@@ -49,7 +49,7 @@ def main():
     display = ConsoleDisplay(species)
 
     if args.mock:
-        windows, now = simulated(np.zeros(WINDOW, np.float32) for _ in MOCK_SCRIPT)
+        windows, now = simulated((np.zeros(WINDOW, np.float32) for _ in MOCK_SCRIPT), step_s=cfg.hop_s)
         Pipeline(cfg, species, MockClassifier(MOCK_SCRIPT, species), display, now=now,
                  log=EventLog(cfg.log_file)).run(windows, mute=cfg.mute)
         return
@@ -69,7 +69,7 @@ def main():
         serve(state, cfg.web_host, cfg.web_port)
     if args.demo:
         windows = itertools.chain.from_iterable(
-            itertools.islice(FileSource(path, realtime=True).windows(), n) for path, n in cfg.demo)
+            itertools.islice(FileSource(path, realtime=True, hop_s=cfg.hop_s).windows(), n) for path, n in cfg.demo)
     else:
         windows = make_source(cfg).windows()
     Pipeline(cfg, species, classifier, display, state=state, log=EventLog(cfg.log_file),
