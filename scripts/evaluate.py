@@ -39,6 +39,11 @@ def run_clip(path, classifier, cfg, timings):
     return n, confirmed, hit_windows
 
 
+def source(path):
+    name = Path(path).name
+    return "ESC-50" if name.startswith("ESC50") else "frugalai" if name.startswith("FRUGALAI") else "xeno-canto"
+
+
 def pct(a, b):
     return f"{100 * a / b:.0f}%" if b else "-"
 
@@ -70,22 +75,25 @@ def main():
 
     by_label = defaultdict(list)
     for r in rows:
-        by_label[r["label"]].append(r)
-    pos = ["| label | clips | hits | misses | hit rate | window hit rate |", "| --- | --- | --- | --- | --- | --- |"]
-    neg = ["| folder | clips | windows | clips with disturbance alarm | clips with indicator confirmed | disturbance window false-hit rate |",
-           "| --- | --- | --- | --- | --- | --- |"]
-    for label, rs in by_label.items():
+        by_label[r["label"], source(r["file"])].append(r)
+    pos = ["| label | source | clips | hits | misses | hit rate | window hit rate | any-disturbance window rate |",
+           "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    neg = ["| folder | source | clips | windows | clips with disturbance alarm | clips with indicator confirmed | disturbance window false-hit rate |",
+           "| --- | --- | --- | --- | --- | --- | --- |"]
+    for (label, src), rs in by_label.items():
         windows = sum(r["windows"] for r in rs)
         if label in kind:
             hits = sum(label in r["confirmed"].split(";") for r in rs)
             target_windows = sum(r["target_hit_windows"] for r in rs)
-            pos.append(f"| {label} | {len(rs)} | {hits} | {len(rs) - hits} | {pct(hits, len(rs))} | {pct(target_windows, windows)} |")
+            dist_windows = sum(r["disturbance_hit_windows"] for r in rs)
+            pos.append(f"| {label} | {src} | {len(rs)} | {hits} | {len(rs) - hits} | {pct(hits, len(rs))} "
+                       f"| {pct(target_windows, windows)} | {pct(dist_windows, windows)} |")
         else:
             confirmed = [set(filter(None, r["confirmed"].split(";"))) for r in rs]
             alarms = sum(any(kind[l] == "disturbance" for l in c) for c in confirmed)
             birds = sum(any(kind[l] == "indicator" for l in c) for c in confirmed)
             dist_windows = sum(r["disturbance_hit_windows"] for r in rs)
-            neg.append(f"| {label} | {len(rs)} | {windows} | {alarms} | {birds} | {pct(dist_windows, windows)} |")
+            neg.append(f"| {label} | {src} | {len(rs)} | {windows} | {alarms} | {birds} | {pct(dist_windows, windows)} |")
 
     mean_ms = 1000 * sum(timings) / len(timings)
     report = f"""# SuoKuulo evaluation
@@ -101,6 +109,8 @@ BirdNET v2.4 via birdnetlib, ai-edge-litert runtime. Thresholds: indicator
 
 A clip is a hit if its label is confirmed at least once. Window hit rate is the
 share of all 3 s windows where the label scored at or above its threshold.
+Any-disturbance window rate counts windows where any disturbance label hit
+(an engine hit on a chainsaw clip still raises the alarm).
 
 {chr(10).join(pos)}
 
