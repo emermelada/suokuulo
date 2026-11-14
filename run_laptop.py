@@ -26,6 +26,7 @@ def main():
     ap.add_argument("--config", default="config/laptop.yaml")
     ap.add_argument("--mock", action="store_true", help="scripted detections, no model, no audio")
     ap.add_argument("--input", help="override audio file/folder")
+    ap.add_argument("-v", "--verbose", action="store_true", help="print raw detections per window")
     args = ap.parse_args()
 
     cfg = config.load(args.config)
@@ -41,7 +42,7 @@ def main():
         cfg.source, cfg.input = "file", args.input
     from suokuulo.classifier import BirdNetClassifier
     classifier = BirdNetClassifier(species, cfg.min_conf)
-    Pipeline(cfg, species, classifier, display).run(make_source(cfg).windows())
+    Pipeline(cfg, species, classifier, display, verbose=args.verbose).run(make_source(cfg).windows())
 
 
 if __name__ == "__main__":

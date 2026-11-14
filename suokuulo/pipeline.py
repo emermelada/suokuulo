@@ -9,18 +9,26 @@ SAMPLE_RATE = 48000
 
 
 class Pipeline:
-    def __init__(self, cfg, species, classifier, display, now=time.monotonic, state=None, log=None):
+    def __init__(self, cfg, species, classifier, display, now=time.monotonic, state=None, log=None, verbose=False):
         self.classifier, self.display, self.state, self.log = classifier, display, state, log
+        self.verbose = verbose
         self.index = {s.id: i for i, s in enumerate(species)}
         self.smoother = Smoother(cfg, now)
         self.scorer = ScoreEngine(cfg, {s.id: s.weight for s in species if s.kind == "indicator"}, now)
         self.windows = 0
+        self.inference_ms = []  # last 20 windows
 
     def step(self, window, sample_rate=SAMPLE_RATE):
         t0 = time.perf_counter()
         detections = self.classifier.classify(window, sample_rate)
         inference_ms = (time.perf_counter() - t0) * 1000
         self.windows += 1
+        self.inference_ms = (self.inference_ms + [inference_ms])[-20:]
+        if self.windows % 20 == 0:
+            print(f"[timing] mean inference {sum(self.inference_ms) / 20:.0f} ms/window over last 20 windows")
+        if self.verbose:
+            raw = ", ".join(f"{d.label} {d.confidence:.2f}" for d in sorted(detections, key=lambda d: -d.confidence))
+            print(f"  window {self.windows:4d} {inference_ms:5.0f} ms  {raw or '-'}")
 
         events = self.smoother.update(detections)
         disturbance_hit = any(d.kind == "disturbance" for d in self.smoother.hits)
