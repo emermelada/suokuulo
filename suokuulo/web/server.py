@@ -1,6 +1,7 @@
 """Stdlib HTTP server: / serves the dashboard, /api/state the JSON snapshot."""
 import json
 import threading
+from urllib.parse import urlsplit
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -12,9 +13,10 @@ def serve(state, host="0.0.0.0", port=8000) -> ThreadingHTTPServer:
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            if self.path == "/api/state":
+            path = urlsplit(self.path).path  # ignore ?window=... (read by the page)
+            if path == "/api/state":
                 body, ctype = json.dumps(state.snapshot()).encode(), "application/json"
-            elif self.path in ("/", "/index.html"):
+            elif path in ("/", "/index.html"):
                 body, ctype = INDEX.read_bytes(), "text/html; charset=utf-8"
             else:
                 return self.send_error(404)

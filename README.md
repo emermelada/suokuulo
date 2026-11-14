@@ -175,7 +175,10 @@ the Qwiic connector.
      48000 Hz`, a `[stats]` line each minute (inference ms, RAM);
    - on the MCU serial (App Lab, the app's Serial Monitor):
      `[uplink] no radio, payload 11...` lines, which `scripts/decode_payload.py` decodes;
-   - the dashboard on `http://<board-ip>:7000/`.
+   - the dashboard on `http://<board-ip>:7000/`. Its selector (10 min / 1 h / 24 h /
+     30 days, default 1 h, remembered per browser) only changes the dashboard;
+     the matrix and the uplink keep `score_window_min`. `?window=10m` opens a
+     given window directly.
 
 To test the board without the mic, set `source: file` and `input: <folder of
 clips copied to the board>`.

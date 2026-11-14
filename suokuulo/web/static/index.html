@@ -45,6 +45,7 @@
   td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
   tr:last-child td { border-bottom: 0; }
   td.n, th.n { text-align: right; }
+  th.n { white-space: nowrap; }
   /* Species */
   .sp-name b { font-weight: 600; }
   .sp-name i { display: block; color: var(--dim); font-size: .82rem; }
@@ -66,6 +67,16 @@
   .months { display: flex; gap: 2px; margin-bottom: 6px; }
   .months span { width: 16px; text-align: center; border-radius: 3px; background: var(--line); color: var(--faint); font-size: .7rem; }
   .months span.on { background: var(--dim); color: var(--bg); font-weight: 600; }
+  /* Window selector */
+  .card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+  .card-head h2 { margin: 0; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { font: inherit; font-size: .85rem; color: var(--dim); background: none; border: 0; padding: 6px 12px;
+                min-height: 34px; cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--line); color: var(--text); font-weight: 600; }
+  .month svg { display: block; width: 100%; height: auto; }
+  .month text { fill: var(--dim); font-size: 9px; }
   /* Acoustic index */
   .index-value { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
   .index-value b { font-size: 1.6rem; }
@@ -95,7 +106,13 @@
 </header>
 <main id="main">
   <section class="card" aria-labelledby="h-health">
-    <h2 id="h-health">Soundscape health</h2>
+    <div class="card-head">
+      <h2 id="h-health">Soundscape health</h2>
+      <div class="seg" id="seg" role="group" aria-label="Time window">
+        <button type="button" data-w="10m">10 min</button><button type="button" data-w="1h">1 h</button><button
+          type="button" data-w="24h">24 h</button><button type="button" data-w="30d">30 days</button>
+      </div>
+    </div>
     <div class="hero">
       <div class="ring">
         <svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden="true">
@@ -106,9 +123,10 @@
         <div class="value"><b class="num" id="score">--</b><span id="label">waiting</span></div>
       </div>
       <div class="breakdown">
-        <div class="bar"><div class="row"><span>Richness <span class="empty">species heard / expected</span></span>
+        <div class="month" id="month" hidden></div>
+        <div class="bar" data-bars><div class="row"><span>Richness <span class="empty">species heard / expected</span></span>
           <b class="num" id="rich-v">--</b></div><div class="track"><div class="fill" id="rich"></div></div></div>
-        <div class="bar"><div class="row"><span>Activity <span class="empty">detection-minutes vs expected</span></span>
+        <div class="bar" data-bars><div class="row"><span>Activity <span class="empty">detection-minutes vs expected</span></span>
           <b class="num" id="act-v">--</b></div><div class="track"><div class="fill" id="act"></div></div></div>
         <p class="facts" id="facts"></p>
       </div>
@@ -128,7 +146,7 @@
   <section class="card wide" aria-labelledby="h-species">
     <h2 id="h-species">Indicator species</h2>
     <table>
-      <thead><tr><th>Species</th><th class="n">Today</th><th class="n">Det-min</th><th class="n">Last heard</th>
+      <thead><tr><th>Species</th><th class="n" id="col-det">Today</th><th class="n">Det-min</th><th class="n">Last heard</th>
         <th class="n hide-narrow">Last 24 h</th></tr></thead>
       <tbody id="species"></tbody>
     </table>
@@ -157,12 +175,57 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&
 const pct = x => x == null ? "--" : Math.round(x * 100) + "%";
 const hhmm = iso => iso ? iso.slice(11, 16) : "--";
 const ACCENT = {Good: "--good", Fair: "--fair", Poor: "--poor"};
+const WINDOWS = {"10m": "Last 10 min", "1h": "Last hour", "24h": "Last 24 h", "30d": "Last 30 days"};
+const WIN_TEXT = {"10m": "last 10 min", "1h": "last hour", "24h": "last 24 h", "30d": "last 30 days"};
+const COL = {"10m": "10 min", "1h": "1 h", "24h": "24 h", "30d": "30 days"};
+
+// Selected window: ?window= in the URL, else the last choice on this browser, else 1 h.
+let win = new URLSearchParams(location.search).get("window");
+if (!WINDOWS[win]) {
+  try { win = localStorage.getItem("suokuulo.window"); } catch (e) { win = null; }
+  if (!WINDOWS[win]) win = "1h";
+}
+let last = null;
+function choose(w) {
+  win = w;
+  try { localStorage.setItem("suokuulo.window", w); } catch (e) { /* private mode: not remembered */ }
+  for (const b of document.querySelectorAll("#seg button")) b.setAttribute("aria-pressed", b.dataset.w === w);
+  lastRows = "";
+  if (last) render(last);
+}
+// Local date of an ISO time; show the date too when it is not today.
+const today = () => new Date().toLocaleDateString("sv");
+const when = iso => !iso ? "--" : iso.slice(0, 10) === today() ? hhmm(iso) : `${iso.slice(8, 10)}.${iso.slice(5, 7)}. ${hhmm(iso)}`;
+
+// 30-day line: one point per day, gaps where a day had no score (off season).
+function monthChart(m) {
+  const W = 300, H = 90, L = 22, B = 14, n = m.days.length, x = i => L + (n < 2 ? 0 : i * (W - L - 4) / (n - 1));
+  const y = v => 4 + (100 - v) / 100 * (H - B - 4);
+  let path = "", pen = false;
+  m.days.forEach((d, i) => {
+    if (d.score == null) { pen = false; return; }
+    path += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(d.score).toFixed(1)}`;
+    pen = true;
+  });
+  const dots = m.days.map((d, i) => d.score == null ? "" :
+    `<circle cx="${x(i).toFixed(1)}" cy="${y(d.score).toFixed(1)}" r="2.2" fill="var(--accent)"><title>${d.date}: ${d.score}</title></circle>`).join("");
+  const grid = [0, 50, 100].map(v => `<line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>
+    <text x="${L - 4}" y="${y(v) + 3}" text-anchor="end">${v}</text>`).join("");
+  const avg = m.health.score == null ? "" : `<line x1="${L}" x2="${W}" y1="${y(m.health.score)}" y2="${y(m.health.score)}"
+    stroke="var(--dim)" stroke-dasharray="3 3"/>`;
+  const date = d => `${d.slice(8, 10)}.${d.slice(5, 7)}.`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="daily health score, last ${n} days">${grid}${avg}
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>${dots}
+    <text x="${L}" y="${H - 2}">${date(m.days[0].date)}</text><text x="${W}" y="${H - 2}" text-anchor="end">${date(m.days[n - 1].date)}</text></svg>
+    <p class="facts">Daily health, dashed: 30-day average (${m.health.score ?? "--"})</p>`;
+}
 
 function ago(s) {
   if (s == null) return "--";
   if (s < 60) return "just now";
   if (s < 3600) return Math.floor(s / 60) + " min ago";
-  return Math.floor(s / 3600) + " h ago";
+  if (s < 172800) return Math.floor(s / 3600) + " h ago";
+  return Math.floor(s / 86400) + " days ago";
 }
 
 // Season icons: lit in their colour when the species is on Finnish peatlands
@@ -202,7 +265,10 @@ function spark(hourly, on) {
 }
 
 function render(s) {
-  const h = s.health || {};
+  last = s;
+  const w = (s.windows || {})[win];  // older snapshots without windows: the configured window
+  const h = {...(s.health || {}), ...(w ? w.health : {})};
+  const month = win === "30d" && w;
   document.documentElement.style.setProperty("--accent", `var(${ACCENT[h.label] || "--off"})`);
   $("site").textContent = s.site || "";
   $("clock").textContent = s.time || "--:--";
@@ -210,7 +276,11 @@ function render(s) {
   $("dot").className = "dot " + (s.status === "listening" ? "listening" : s.status === "mic error" ? "error" : "");
 
   $("score").textContent = h.score ?? "--";
-  $("label").textContent = h.off_season ? "Off season" : h.label || "waiting";  // full label below the bars
+  $("label").textContent = month && !w.enough ? "Not enough history" : h.off_season ? "Off season" : h.label || "waiting";
+  $("month").hidden = !month;
+  for (const el of document.querySelectorAll("[data-bars]")) el.hidden = !!month;
+  if (month) $("month").innerHTML = w.enough ? monthChart(w)
+    : `<p class="facts">Not enough history yet (${w.n_days} day${w.n_days === 1 ? "" : "s"}). The 30-day view needs 3.</p>`;
   $("arc").setAttribute("stroke-dasharray", `${(h.score || 0) / 100 * 326.7} 327`);
   $("rich-v").textContent = pct(h.richness);
   $("act-v").textContent = pct(h.activity);
@@ -218,16 +288,19 @@ function render(s) {
   $("act").style.width = pct(h.activity ?? 0);
   $("facts").textContent = !h.profile ? "" : h.off_season
     ? `${h.label}. Profile: ${h.profile}: few indicator birds are expected now, so no health number.`
-    : `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min`;
+    : `Profile: ${h.profile} · baseline: ${h.baseline} · ${WIN_TEXT[win]}` +
+      (month || h.window_min === (s.health || {}).window_min ? "" : ` · device display: last ${(s.health || {}).window_min} min`);
 
-  const td = s.today || {};
+  const td = w ? {...w.summary, hourly: (s.today || {}).hourly} : s.today || {};
+  $("h-today").textContent = w ? WINDOWS[win] : "Today";
+  $("col-det").textContent = w ? COL[win] : "Today";
   $("t-species").textContent = td.expected ? `${td.expected_heard} / ${td.expected}` : `${td.species_heard ?? "--"}`;
   $("t-species-word").textContent = td.expected
     ? `expected species heard${td.species_heard > td.expected_heard ? ` (+${td.species_heard - td.expected_heard} other)` : ""}`
     : "species heard";
   $("t-det").textContent = td.detections ?? "--";
-  $("t-first").textContent = hhmm(td.first);
-  $("t-last").textContent = hhmm(td.last);
+  $("t-first").textContent = when(td.first);
+  $("t-last").textContent = when(td.last);
   const tmax = Math.max(5, ...(td.hourly || [0]));
   $("t-strip").innerHTML = td.hourly ? `<svg width="100%" height="32" viewBox="0 0 240 32" preserveAspectRatio="none"
     role="img" aria-label="detection-minutes per hour, last 24 hours">` + td.hourly.map((v, i) => {
@@ -236,12 +309,14 @@ function render(s) {
     }).join("") + "</svg>" : "";
 
   const rowsHtml = (s.species || []).map(r => {
-    const cls = r.heard_in_window ? "" : r.detections_today ? "today" : "none";
-    const tag = r.heard_in_window ? "" : `<span class="tag">${r.detections_today ? "heard today, not in window"
-      : "not heard today"}</span>`;
+    const v = w ? w.species[r.id] : {detections: r.detections_today, minutes: r.minutes_today, last_ago_s: r.last_ago_s};
+    const inWindow = w ? v.detections > 0 : r.heard_in_window;
+    const cls = inWindow ? "" : r.detections_today ? "today" : "none";
+    const tag = inWindow ? "" : `<span class="tag">${r.detections_today ? "heard today, not in window"
+      : w ? `not heard, ${WIN_TEXT[win]}` : "not heard today"}</span>`;
     return `<tr class="${cls}"><td class="sp-name"><b>${esc(r.common)}</b>${seasonIcons(r, s.season, h.profile)}${tag}<i>${esc(r.latin)}</i></td>
-      <td class="n num">${r.detections_today}</td><td class="n num">${r.minutes_today}</td>
-      <td class="n num">${ago(r.last_ago_s)}</td><td class="n hide-narrow">${spark(r.hourly, r.heard_in_window || r.detections_today)}</td></tr>`;
+      <td class="n num">${v.detections}</td><td class="n num">${v.minutes}</td>
+      <td class="n num">${ago(v.last_ago_s)}</td><td class="n hide-narrow">${spark(r.hourly, inWindow || r.detections_today)}</td></tr>`;
   }).join("");
   if (rowsHtml !== lastRows) $("species").innerHTML = lastRows = rowsHtml;  // keep a tapped tooltip open
 
@@ -249,7 +324,7 @@ function render(s) {
   const sign = x => x == null ? "--" : (x > 0 ? "+" : "") + x.toFixed(2);
   $("ndsi").textContent = sign(ai.window);
   $("ndsi-word").textContent = ai.window == null ? "collecting the first minute" :
-    `${ai.window > 0.3 ? "nature-dominated" : ai.window < -0.3 ? "noise-dominated" : "mixed"}, last ${h.window_min} min`;
+    `${ai.window > 0.3 ? "nature-dominated" : ai.window < -0.3 ? "noise-dominated" : "mixed"}, last ${(s.health || {}).window_min} min`;
   $("ndsi-minute").textContent = ai.minute == null ? "" : `Last full minute: ${sign(ai.minute)}`;
   $("ndsi-spark").innerHTML = ai.hourly ? `<svg width="120" height="24" viewBox="0 0 120 24" role="img"
     aria-label="hourly acoustic index, last 24 hours"><line x1="0" y1="12" x2="120" y2="12" stroke="var(--line)"/>` +
@@ -276,6 +351,8 @@ async function tick() {
     $("dot").className = "dot error";
   }
 }
+for (const b of document.querySelectorAll("#seg button")) b.onclick = () => choose(b.dataset.w);
+choose(win);
 tick();
 setInterval(tick, 2000);
 </script>

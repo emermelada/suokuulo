@@ -33,6 +33,8 @@ from .config import season_of, seasons_present
 ALERT_GROUPS = {"machinery", "gunshot"}  # the only disturbances that raise the alarm
 GROUP_NAMES = {"people": "People nearby", "machinery": "Machinery", "gunshot": "Gunshot", "other": "Other"}
 KEEP_S = 25 * 3600  # events kept in memory: 24 h sparkline + today
+WINDOWS = {"10m": 600, "1h": 3600, "24h": 86400}  # dashboard selector; "30d" comes from daily history
+HISTORY_DAYS = 30
 
 
 def health(observed, expected, weights, richness_weight=0.6, activity_weight=0.4):
@@ -131,7 +133,7 @@ class Soundscape:
         t = now()
         self.events = [e for e in read_log(log_path) if e[0] > t - KEEP_S and self.kept(e[2])]  # after a restart
         self.bands = {}  # minute -> [anthrophony, biophony] power summed over its windows (not logged)
-        self.day = None
+        self.day, self.history = None, []
         self.alarm, self.silent = False, False
         self.last_alert_hit, self.last_bird = None, t
 
@@ -152,7 +154,9 @@ class Soundscape:
             total[1] += bands[1]
         if self.local(t).date() != self.day:  # midnight (or startup): relearn the baseline
             self.day = self.local(t).date()
-            self.baseline.learn(read_log(self.log_path), self.day, self.tz, c.learn_min_days)
+            log = read_log(self.log_path)
+            self.baseline.learn(log, self.day, self.tz, c.learn_min_days)
+            self.history = self.past_days(log)
         alerts = []
         events = [e for e in events if self.kept(e.kind)]
         for e in events:
@@ -190,22 +194,117 @@ class Soundscape:
         return {"minute": round(per_minute[max(per_minute)], 2) if per_minute else None,
                 "window": mean(recent), "hourly": [mean(h) for h in hourly]}
 
-    def health(self) -> dict:
-        t, c = self.now(), self.cfg
-        local = self.local(t)
-        per_hour, weights = self.baseline.expected(local)
-        scale = c.score_window_min / 60
-        since = t - c.score_window_min * 60
-        observed = {s.id: minutes([e for e in self.events if e[1] == s.id and e[0] >= since])
-                    for s in self.species if s.kind == "indicator"}
-        expected = {s: n * scale for s, n in per_hour.items()}
-        off_season = sum(per_hour.values()) < c.off_season_below  # e.g. winter: a number would mislead
+    def expected_over(self, since, end):
+        """Expected detection-minutes per species between two times: each hour's
+        per-hour expectation (its dawn/day/night or learned value) times the
+        part of that hour covered. Returns (expected, weights)."""
+        expected, weights, t = {}, {}, since
+        while t < end:
+            # ponytail: hours split on UTC hour boundaries, exact for whole-hour time zones (Helsinki)
+            stop = min(end, (int(t) // 3600 + 1) * 3600)
+            per_hour, weights = self.baseline.expected(self.local(t))
+            for s, n in per_hour.items():
+                expected[s] = expected.get(s, 0) + n * (stop - t) / 3600
+            t = stop
+        return expected, weights
+
+    def score(self, observed, since, end):
+        """Health of one period; off season (no number) when fewer than
+        off_season_below detection-minutes per hour are expected on average."""
+        c = self.cfg
+        expected, weights = self.expected_over(since, end)
+        off_season = sum(expected.values()) / max((end - since) / 3600, 1 / 60) < c.off_season_below
         h = (not off_season and health(observed, expected, weights, c.richness_weight, c.activity_weight)) or \
             {"score": None, "richness": None, "activity": None}
+        return h, {s: e for s, e in expected.items() if e > 0}
+
+    def observed(self, since, end=None):
+        return {s.id: minutes([e for e in self.events if e[1] == s.id and since <= e[0] <= (end or e[0])])
+                for s in self.species if s.kind == "indicator"}
+
+    def health(self, window_s=None) -> dict:
+        """Health over the last window_s seconds (default: score_window_min, the
+        number the LED matrix and the uplink use)."""
+        t = self.now()
+        window_s = window_s or self.cfg.score_window_min * 60
+        observed = self.observed(t - window_s)
+        h, expected = self.score(observed, t - window_s, t)
         return {**h, "label": health_label(h["score"]), "off_season": h["score"] is None,
-                "profile": self.baseline.profile(local.date()),
-                "baseline": self.baseline.source(), "window_min": c.score_window_min,
-                "observed": observed, "expected": {s: round(e, 2) for s, e in expected.items() if e > 0}}
+                "profile": self.baseline.profile(self.local(t).date()),
+                "baseline": self.baseline.source(), "window_min": round(window_s / 60),
+                "observed": observed, "expected": {s: round(e, 2) for s, e in expected.items()}}
+
+    def past_days(self, log) -> list[dict]:
+        """Health and per-species counts for each whole day from the first
+        logged day (at most HISTORY_DAYS - 1 days back) to yesterday, from
+        events.csv. Days without detections count, as a quiet bog."""
+        today = self.local().date()
+        indicators = {s.id for s in self.species if s.kind == "indicator"}
+        by_day = {}
+        for e in log:
+            d = self.local(e[0]).date()
+            if e[1] in indicators and 0 < (today - d).days < HISTORY_DAYS:
+                by_day.setdefault(d, []).append(e)
+        days = []
+        for i in range((today - min(by_day)).days if by_day else 0, 0, -1):
+            d = date.fromordinal(today.toordinal() - i)
+            start = datetime(d.year, d.month, d.day, tzinfo=self.tz).timestamp()
+            end = datetime.fromordinal(d.toordinal() + 1).replace(tzinfo=self.tz).timestamp()
+            events = by_day.get(d, [])
+            observed = {s: minutes([e for e in events if e[1] == s]) for s in indicators}
+            h, expected = self.score(observed, start, end)
+            days.append({"date": d.isoformat(), "score": h["score"], "expected": set(expected),
+                         "minutes": observed, "detections": {s: sum(e[1] == s for e in events) for s in indicators},
+                         "last": {e[1]: e[0] for e in events},
+                         "span": (events[0][0], events[-1][0]) if events else None})
+        return days
+
+    def window(self, since, t, h, expected, rows) -> dict:
+        """Dashboard numbers for one selector window: health, summary, per species."""
+        birds = [e for e in self.events if e[0] >= since and e[2] == "indicator"]
+        species = {}
+        for r in rows:
+            mine = [e for e in birds if e[1] == r["id"]]
+            species[r["id"]] = {"detections": len(mine), "minutes": minutes(mine), "expected": r["id"] in expected,
+                                "last_ago_s": round(t - mine[-1][0]) if mine else None}
+        return {"health": h, "summary": self.summary(species, expected, birds), "species": species}
+
+    def summary(self, species, expected, birds):
+        heard = {s for s, v in species.items() if v["detections"]}
+        iso = lambda e: self.local(e[0]).isoformat(timespec="seconds") if e else None  # noqa: E731
+        return {"species_heard": len(heard), "expected": len(expected), "expected_heard": len(heard & set(expected)),
+                "detections": sum(v["detections"] for v in species.values()),
+                "first": iso(birds[0] if birds else None), "last": iso(birds[-1] if birds else None)}
+
+    def month(self, t, midnight, rows) -> dict:
+        """30-day view: one health point per day (today so far from memory,
+        earlier days from events.csv), their mean, and per-species totals."""
+        today = self.observed(midnight)
+        h, expected = self.score(today, midnight, t)
+        days = self.history + [{"date": self.local(t).date().isoformat(), "score": h["score"], "expected": set(expected)}]
+        scores = [d["score"] for d in days if d["score"] is not None]
+        enough = len(days) >= 3
+        mean = round(statistics.mean(scores)) if enough and scores else None
+        species, expected = {}, set().union(*(d["expected"] for d in days))
+        birds = [e for e in self.events if e[0] >= midnight and e[2] == "indicator"]
+        for r in rows:
+            past = [d for d in self.history if d["detections"][r["id"]]]
+            mine = [e for e in birds if e[1] == r["id"]]
+            last = mine[-1][0] if mine else max((d["last"][r["id"]] for d in past), default=None)
+            species[r["id"]] = {"detections": len(mine) + sum(d["detections"][r["id"]] for d in past),
+                                "minutes": minutes(mine) + sum(d["minutes"][r["id"]] for d in past),
+                                "expected": r["id"] in expected, "last_ago_s": None if last is None else round(t - last)}
+        summary = self.summary(species, expected, birds)
+        spans = [d["span"] for d in self.history if d["span"]]
+        iso = lambda x: self.local(x).isoformat(timespec="seconds")  # noqa: E731
+        if spans:
+            summary["first"] = iso(spans[0][0])
+            summary["last"] = summary["last"] or iso(spans[-1][1])
+        return {"health": {"score": mean, "label": health_label(mean) if enough else "Not enough history",
+                           "richness": None, "activity": None, "off_season": enough and mean is None,
+                           "window_min": HISTORY_DAYS * 1440},
+                "days": [{"date": d["date"], "score": d["score"]} for d in days], "n_days": len(days),
+                "enough": enough, "summary": summary, "species": species}
 
     def snapshot(self) -> dict:
         """Everything the dashboard shows apart from uptime, timing and RAM."""
@@ -244,6 +343,12 @@ class Soundscape:
                     "group": self.group.get(e[1], ""), "confidence": round(e[3], 2)}
 
         rows.sort(key=lambda r: not r["expected"])  # expected now first, species.yaml order otherwise
+        windows = {}
+        for key, seconds in WINDOWS.items():
+            wh = h if seconds == self.cfg.score_window_min * 60 else self.health(seconds)
+            windows[key] = self.window(t - seconds, t, {k: v for k, v in wh.items() if k not in ("observed", "expected")},
+                                       wh["expected"], rows)
+        windows["30d"] = self.month(t, midnight, rows)
         birds_today = [e for e in today if e[2] == "indicator"]
         heard = {r["id"] for r in rows if r["detections_today"]}
         summary = {"species_heard": len(heard), "expected": len(h["expected"]),
@@ -253,7 +358,7 @@ class Soundscape:
                    "hourly": [sum(r["hourly"][i] for r in rows) for i in range(24)]}
         snap = {"health": {k: v for k, v in h.items() if k not in ("observed", "expected")},
                 "season": season_of(local.month),
-                "today": summary, "species": rows, "acoustic_index": self.acoustic_index(),
+                "today": summary, "species": rows, "windows": windows, "acoustic_index": self.acoustic_index(),
                 "events": [entry(e) for e in self.events[-20:][::-1]]}
         if self.cfg.disturbance_enabled:
             snap["disturbance"] = self.disturbance(t, midnight, iso, entry)

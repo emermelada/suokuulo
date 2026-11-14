@@ -129,7 +129,9 @@ def test_baseline_learned_after_three_days(tmp_path):
     s = soundscape(clock, tmp_path / "events.csv", baseline_profile="breeding", score_window_min=60)
     s.update([])
     assert s.baseline.source() == "learned from 3 days"
-    assert s.health()["expected"] == {"golden_plover": 4}  # median of 4, 6, 0; curlew only at noon
+    assert s.health()["expected"] == {"golden_plover": 2}  # 04:30-05:30: half of 05:00's median of 4, 6, 0
+    clock.t = at(2026, 6, 10, 6, 0)
+    assert s.health()["expected"] == {"golden_plover": 4}  # the whole 05:00 hour; curlew only at noon
 
 
 @pytest.mark.parametrize("month", [11, 12, 1, 2])
@@ -216,3 +218,47 @@ def test_species_table_expected_now_first():
     expected = [r["expected"] for r in rows]
     assert expected == sorted(expected, reverse=True) and rows[0]["id"] == "golden_plover"
     assert soundscape(clock, baseline_profile="breeding").snapshot()["season"] == "summer"
+
+
+def test_expected_activity_sums_the_hours_covered():
+    # breeding plover: dawn (03-07) 12/h, day (07-22) 6/h, night 3/h
+    s = soundscape(Clock(at(2026, 6, 10, 7, 30)), baseline_profile="breeding")
+    plover = lambda h: h["expected"]["golden_plover"]  # noqa: E731
+    assert plover(s.health(3600)) == 9           # 06:30-07:30: half an hour of dawn + half of day
+    assert plover(s.health(600)) == 1            # 07:20-07:30: day only
+    assert plover(s.health(86400)) == 3 * 5 + 12 * 4 + 6 * 15  # 24 h: 5 night, 4 dawn, 15 day hours
+    s.now = Clock(at(2026, 6, 10, 3, 5))
+    assert plover(s.health(600)) == pytest.approx(3 * 5 / 60 + 12 * 5 / 60)  # 02:55-03:05 spans night and dawn
+
+
+def test_window_boundaries():
+    clock = Clock(at(2026, 6, 10, 12, 0))
+    s = soundscape(clock, baseline_profile="breeding", score_window_min=10)
+    for minute_ago in (61, 59, 9):
+        clock.t = at(2026, 6, 10, 12, 0) - minute_ago * 60
+        s.update([bird()])
+    clock.t = at(2026, 6, 10, 12, 0)
+    w = s.snapshot()["windows"]
+    assert [w[k]["species"]["golden_plover"]["minutes"] for k in ("10m", "1h", "24h")] == [1, 2, 3]
+    assert w["10m"]["health"]["score"] == s.health()["score"]  # the configured window is the LED number
+    assert w["1h"]["summary"]["detections"] == 2 and w["1h"]["health"]["window_min"] == 60
+
+
+def test_thirty_days_needs_three_days_of_history(tmp_path):
+    log = EventLog(tmp_path / "events.csv")
+    log.write("2026-06-09T05:00:00+03:00", "golden_plover", "indicator", "0.9", "")
+    log.file.close()
+    s = soundscape(Clock(at(2026, 6, 10, 6, 0)), tmp_path / "events.csv", baseline_profile="breeding")
+    s.update([])
+    month = s.snapshot()["windows"]["30d"]
+    assert (month["n_days"], month["enough"], month["health"]["score"]) == (2, False, None)
+    assert month["species"]["golden_plover"]["detections"] == 1
+    log = EventLog(tmp_path / "events.csv")
+    log.write("2026-06-01T05:00:00+03:00", "curlew", "indicator", "0.9", "")  # first day: 9 days of history
+    log.file.close()
+    s = soundscape(Clock(at(2026, 6, 10, 6, 0)), tmp_path / "events.csv", baseline_profile="breeding")
+    s.update([])
+    month = s.snapshot()["windows"]["30d"]
+    scores = [d["score"] for d in month["days"]]
+    assert month["n_days"] == 10 and month["enough"] and month["health"]["score"] == round(sum(scores) / 10)
+    assert month["days"][0]["date"] == "2026-06-01" and scores[0] > 0 and scores[1] == 0  # silent day counts
