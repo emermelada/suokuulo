@@ -86,7 +86,8 @@ def main():
 
     classifier = BirdNetClassifier(species, cfg.min_conf)
     source = AppLabMicSource(cfg.device) if cfg.source == "applab" else make_source(cfg)
-    pipeline = Pipeline(cfg, species, classifier, BridgeDisplay(), state=state, log=EventLog(cfg.log_file))
+    pipeline = Pipeline(cfg, species, classifier, BridgeDisplay(), state=state, log=EventLog(cfg.log_file),
+                        verbose=cfg.verbose)
     # App.run calls user_loop forever: if the mic stream ends, the pipeline restarts.
     # TODO(hardware): check Stop in App Lab ends the app while user_loop is blocked on the mic.
     App.run(user_loop=lambda: pipeline.run(source.windows(), mute=cfg.mute))

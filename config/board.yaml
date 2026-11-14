@@ -1,4 +1,5 @@
-# UNO Q, loaded by applab/python/main.py.
+# UNO Q, loaded by applab/python/main.py. config/laptop.yaml includes this file,
+# so detection settings are the same on the laptop and the board.
 source: applab        # App Lab Microphone peripheral; "file" with input: ... replays clips instead
 device: null          # null = Microphone.USB_MIC_1 (first USB mic)
 classifier: birdnet
@@ -6,3 +7,8 @@ min_conf: 0.1
 log_file: events.csv  # relative to the app folder on the board
 web_port: 7000        # App Lab WebUI brick port (brick_config.yaml declares 7000)
 mute: false
+verbose: true         # raw detections per window in the App Lab log, for live tuning
+
+# Detection. Golden plover has weight 3; its lower threshold is checked against
+# false confirmations on every other clip in eval_results.md.
+species_hit: {golden_plover: 0.35}

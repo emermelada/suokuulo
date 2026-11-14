@@ -28,6 +28,7 @@ class Config:
     # detection (section 7)
     indicator_hit: float = 0.50
     disturbance_hit: float = 0.35
+    species_hit: dict | None = None   # per-label overrides, e.g. {golden_plover: 0.35}
     hits_needed: int = 2
     hit_window: int = 3
     cooldown_s: float = 30
@@ -44,6 +45,7 @@ class Config:
     headline_species: str = "golden_plover"  # gets the double chirp
     mute: bool = False                        # buzzer off, matrix still works
     log_file: str = "events.csv"
+    verbose: bool = False                     # print raw detections for every window
     web_host: str = "0.0.0.0"
     web_port: int = 8000
     # demo playlist: [path, max_windows] pairs, played with realtime=True
@@ -51,8 +53,12 @@ class Config:
 
 
 def load(path) -> Config:
+    """`include: other.yaml` loads that file first; keys in this file override it."""
     path = Path(path)
-    cfg = Config(**(yaml.safe_load(path.read_text()) or {}))
+    data = yaml.safe_load(path.read_text()) or {}
+    if "include" in data:
+        data = {**yaml.safe_load((path.parent / data.pop("include")).read_text()), **data}
+    cfg = Config(**data)
     cfg.species_file = str(path.parent / cfg.species_file)
     return cfg
 

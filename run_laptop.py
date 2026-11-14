@@ -73,7 +73,7 @@ def main():
     else:
         windows = make_source(cfg).windows()
     Pipeline(cfg, species, classifier, display, state=state, log=EventLog(cfg.log_file),
-             verbose=args.verbose).run(windows, mute=cfg.mute)
+             verbose=args.verbose or cfg.verbose).run(windows, mute=cfg.mute)
 
 
 if __name__ == "__main__":

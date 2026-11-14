@@ -9,6 +9,7 @@ class Smoother:
     def __init__(self, cfg, now=time.monotonic):
         self.now = now
         self.threshold = {"indicator": cfg.indicator_hit, "disturbance": cfg.disturbance_hit}
+        self.label_hit = cfg.species_hit or {}
         self.n, self.k, self.cooldown = cfg.hit_window, cfg.hits_needed, cfg.cooldown_s
         self.history = {}   # label -> deque of hit confidences, 0.0 = miss
         self.kind = {}
@@ -20,7 +21,7 @@ class Smoother:
         t = self.now()
         best = {}
         for d in detections:
-            if d.confidence >= self.threshold[d.kind] and d.confidence > getattr(best.get(d.label), "confidence", 0):
+            if d.confidence >= self.label_hit.get(d.label, self.threshold[d.kind]) and d.confidence > getattr(best.get(d.label), "confidence", 0):
                 best[d.label] = d
         self.hits = list(best.values())
         for d in self.hits:
