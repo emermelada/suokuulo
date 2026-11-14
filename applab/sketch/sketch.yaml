@@ -4,7 +4,9 @@ profiles:
       - platform: arduino:zephyr
     libraries:
       # Same pins as the official UNO Q Modulino examples (app-bricks-examples).
-      # Arduino_RouterBridge and Arduino_LED_Matrix ship with the arduino:zephyr core.
+      # Arduino_LED_Matrix ships inside the arduino:zephyr core. Since core 0.54.1
+      # Arduino_RouterBridge is no longer bundled: core 1.1.0 installs it (0.4.4,
+      # with RPClite 0.3.1 and MsgPack) through its libraryDependencies.
       - Arduino_Modulino (0.7.0)
       - dependency: ArduinoGraphics (1.1.4)
       - dependency: Arduino_HS300x (1.0.0)
