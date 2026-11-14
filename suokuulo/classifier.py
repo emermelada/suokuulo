@@ -63,14 +63,17 @@ class BirdNetClassifier:
         self.species, self.min_conf = species, min_conf
         self.columns = np.array([labels.index(s.label) for s in species])
         self.highpass = highpass_gain(highpass_hz) if highpass_hz else None
+        self.spectrum = None  # rfft of the last raw window, reused for the acoustic index
         self.load_s = time.perf_counter() - t0
         print(f"[birdnet] imports + model load {self.load_s:.2f} s")
 
     def classify(self, window, sample_rate):
         if sample_rate != 48000 or window.shape != (144000,):
             raise ValueError(f"BirdNET needs 3 s at 48 kHz, got {window.shape} at {sample_rate} Hz")
+        self.spectrum = None
         if self.highpass is not None:
-            window = np.fft.irfft(np.fft.rfft(window) * self.highpass, len(window))
+            self.spectrum = np.fft.rfft(window)
+            window = np.fft.irfft(self.spectrum * self.highpass, len(window))
         self.interpreter.set_tensor(self.input, window.astype(np.float32, copy=False)[None])
         self.interpreter.invoke()
         logits = self.interpreter.get_tensor(self.output)[0, self.columns]

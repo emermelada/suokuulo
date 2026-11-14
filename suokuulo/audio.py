@@ -44,6 +44,21 @@ def highpass_gain(hz, n=WINDOW, order=2):
         return 1 / np.sqrt(1 + (hz / f) ** (2 * order))
 
 
+def band_power(spectrum, bands) -> list[float]:
+    """Power of an rfft spectrum of a 48 kHz window in each (low_hz, high_hz) band."""
+    f = np.fft.rfftfreq(2 * (len(spectrum) - 1), 1 / SAMPLE_RATE)
+    power = np.abs(spectrum) ** 2
+    return [float(power[(f >= lo) & (f < hi)].sum()) for lo, hi in bands]
+
+
+def ndsi(anthro, bio) -> float:
+    """Normalized Difference Soundscape Index (Kasten et al. 2012) from band
+    powers: -1 = anthrophony (engines, voices, hum at 1-2 kHz) dominates,
+    +1 = biophony (birds, insects at 2-8 kHz) dominates. Needs no species.
+    Near-silence reads positive."""
+    return (bio - anthro) / (bio + anthro) if anthro + bio > 0 else 0.0
+
+
 def resample(y: np.ndarray, rate: int) -> np.ndarray:
     """To 48 kHz with soxr (what librosa uses inside, without librosa's ~70 MB of imports)."""
     if rate == SAMPLE_RATE:

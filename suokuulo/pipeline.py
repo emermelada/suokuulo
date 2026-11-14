@@ -2,6 +2,9 @@
 -> display/log/state."""
 import time
 
+import numpy as np
+
+from .audio import band_power
 from .detection import Smoother
 from .scoring import ALERT_GROUPS, Soundscape
 from .state import memory
@@ -34,7 +37,10 @@ class Pipeline:
         group = self.soundscape.group
         alert_hit = any(group.get(d.label) in ALERT_GROUPS for d in self.smoother.hits)
         prev_alarm = self.soundscape.alarm
-        alerts = self.soundscape.update(events, alert_hit)
+        spectrum = getattr(self.classifier, "spectrum", None)  # reuse the high-pass FFT
+        spectrum = np.fft.rfft(window) if spectrum is None else spectrum
+        bands = band_power(spectrum, (self.cfg.ndsi_anthro_hz, self.cfg.ndsi_bio_hz))
+        alerts = self.soundscape.update(events, alert_hit, bands)
         score = self.soundscape.health()["score"]
         t = self.now()
         iso = self.soundscape.local(t).isoformat(timespec="seconds")

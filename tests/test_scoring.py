@@ -186,3 +186,22 @@ def test_winter_is_off_season_and_disturbance_becomes_the_main_output():
     clock.t = at(2026, 6, 15, 5, 0)  # breeding dawn: a number again
     assert soundscape(clock).health()["off_season"] is False
 
+
+def test_acoustic_index_per_minute_never_changes_health():
+    import numpy as np
+    from suokuulo.audio import band_power, ndsi
+    t = np.arange(144000) / 48000
+    assert ndsi(*band_power(np.fft.rfft(np.sin(2 * np.pi * 1500 * t)), [(1000, 2000), (2000, 8000)])) < -0.99
+    assert ndsi(*band_power(np.fft.rfft(np.sin(2 * np.pi * 4000 * t)), [(1000, 2000), (2000, 8000)])) > 0.99
+    clock = Clock(at(2026, 6, 10, 5, 0, 0))
+    s = soundscape(clock, baseline_profile="breeding", score_window_min=10)
+    s.update([bird()])
+    before = s.health()["score"]
+    for anthro, bio in ((3.0, 1.0), (3.0, 1.0), (1.0, 0.0)):  # three windows in minute 05:00
+        clock.t += 15
+        s.update([], bands=(anthro, bio))
+    clock.t = at(2026, 6, 10, 5, 1, 30)  # 05:00 is now complete
+    s.update([], bands=(0.0, 1.0))
+    index = s.snapshot()["acoustic_index"]
+    assert index["minute"] == index["window"] == round((2 - 7) / 9, 2)  # summed bands, not mean of ratios
+    assert s.health()["score"] == before

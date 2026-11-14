@@ -24,6 +24,8 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
+from .audio import ndsi
+
 ALERT_GROUPS = {"machinery", "gunshot"}  # the only disturbances that raise the alarm
 GROUP_NAMES = {"people": "People nearby", "machinery": "Machinery", "gunshot": "Gunshot", "other": "Other"}
 KEEP_S = 25 * 3600  # events kept in memory: 24 h sparkline + today
@@ -122,6 +124,7 @@ class Soundscape:
         self.baseline = Baseline(cfg.baseline_file, cfg.baseline_profile)
         t = now()
         self.events = [e for e in read_log(log_path, self.tz) if e[0] > t - KEEP_S]  # rebuild after restart
+        self.bands = {}  # minute -> [anthrophony, biophony] power summed over its windows (not logged)
         self.day = None
         self.alarm, self.silent = False, False
         self.last_alert_hit, self.last_bird = None, t
@@ -129,10 +132,15 @@ class Soundscape:
     def local(self, t=None):
         return datetime.fromtimestamp(self.now() if t is None else t, self.tz)
 
-    def update(self, events, alert_hit=False) -> list[dict]:
+    def update(self, events, alert_hit=False, bands=None) -> list[dict]:
         """Record one window's confirmed events; return new alerts as {type, label}.
-        alert_hit: a machinery/gunshot label hit this window (keeps the alarm on)."""
+        alert_hit: a machinery/gunshot label hit this window (keeps the alarm on).
+        bands: the window's (anthrophony, biophony) power for the acoustic index."""
         t, c = self.now(), self.cfg
+        if bands is not None:
+            total = self.bands.setdefault(int(t // 60), [0.0, 0.0])
+            total[0] += bands[0]
+            total[1] += bands[1]
         if self.local(t).date() != self.day:  # midnight (or startup): relearn the baseline
             self.day = self.local(t).date()
             self.baseline.learn(read_log(self.log_path, self.tz), self.day, self.tz, c.learn_min_days)
@@ -152,7 +160,25 @@ class Soundscape:
             self.silent = True
             alerts.append({"type": "silence", "label": ""})
         self.events = [e for e in self.events if e[0] > t - KEEP_S]
+        self.bands = {m: v for m, v in self.bands.items() if m * 60 > t - KEEP_S}
         return alerts
+
+    def acoustic_index(self) -> dict:
+        """NDSI per minute: latest complete minute, mean over the health window, 24 hourly means."""
+        t = self.now()
+        per_minute = {m: ndsi(a, b) for m, (a, b) in self.bands.items() if m < int(t // 60)}
+        first_hour = (int(t) // 3600 - 23) * 3600
+        hourly = [[] for _ in range(24)]
+        for m, v in per_minute.items():
+            if m * 60 >= first_hour:
+                hourly[(m * 60 - first_hour) // 3600].append(v)
+        recent = [v for m, v in per_minute.items() if m * 60 >= t - self.cfg.score_window_min * 60]
+
+        def mean(xs):
+            return round(statistics.mean(xs), 2) if xs else None
+
+        return {"minute": round(per_minute[max(per_minute)], 2) if per_minute else None,
+                "window": mean(recent), "hourly": [mean(h) for h in hourly]}
 
     def health(self) -> dict:
         t, c = self.now(), self.cfg
@@ -223,4 +249,5 @@ class Soundscape:
                 "species": rows,
                 "disturbance": {"alarm": self.alarm, "groups": groups, "hour_minutes": hour_minutes,
                                 "level": level, "last": entry(disturbances[-1]) if disturbances else None},
+                "acoustic_index": self.acoustic_index(),
                 "events": [entry(e) for e in self.events[-20:][::-1]]}

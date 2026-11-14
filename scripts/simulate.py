@@ -50,6 +50,7 @@ def main():
     ap.add_argument("--start", help="local ISO time, e.g. 2026-06-10T05:00 (default: now)")
     ap.add_argument("--web", action="store_true")
     args = ap.parse_args()
+    sys.stdout.reconfigure(line_buffering=True)  # live timeline when piped
     cfg = config.load(args.config)
     tz = ZoneInfo(cfg.timezone)
     clock = [datetime.fromisoformat(args.start).replace(tzinfo=tz).timestamp() if args.start else time.time()]

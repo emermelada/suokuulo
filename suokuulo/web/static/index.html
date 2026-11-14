@@ -63,6 +63,9 @@
   tr.quiet td { color: var(--dim); }
   .tag { font-size: .75rem; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; }
   .spark { display: block; }
+  /* Acoustic index */
+  .index-value { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .index-value b { font-size: 1.6rem; }
   /* Event log */
   .log td { font-size: .9rem; padding: 6px 8px 6px 0; }
   .log .t { color: var(--dim); width: 5.5em; }
@@ -126,7 +129,16 @@
       <tbody id="species"></tbody>
     </table>
   </section>
-  <section class="card wide" aria-labelledby="h-log">
+  <section class="card" aria-labelledby="h-index">
+    <h2 id="h-index">Acoustic index (NDSI)</h2>
+    <div class="index-value"><b class="num" id="ndsi">--</b><span class="empty" id="ndsi-word"></span></div>
+    <div id="ndsi-spark"></div>
+    <p class="facts">Sound energy at 2-8 kHz (birds, insects) against 1-2 kHz (engines,
+      voices), per minute: -1 noise-dominated, +1 nature-dominated. Needs no species,
+      so it works all year. Shown for context only, never part of health; silence reads high.</p>
+    <p class="facts" id="ndsi-minute"></p>
+  </section>
+  <section class="card" aria-labelledby="h-log">
     <h2 id="h-log">Event log</h2>
     <table class="log"><tbody id="events"></tbody></table>
   </section>
@@ -196,6 +208,17 @@ function render(s) {
       <td class="n num">${r.detections_today}</td><td class="n num">${r.minutes_today}</td>
       <td class="n num">${ago(r.last_ago_s)}</td><td class="n hide-narrow">${spark(r.hourly, r.heard_in_window || r.detections_today)}</td></tr>`;
   }).join("");
+
+  const ai = s.acoustic_index || {};
+  const sign = x => x == null ? "--" : (x > 0 ? "+" : "") + x.toFixed(2);
+  $("ndsi").textContent = sign(ai.window);
+  $("ndsi-word").textContent = ai.window == null ? "collecting the first minute" :
+    `${ai.window > 0.3 ? "nature-dominated" : ai.window < -0.3 ? "noise-dominated" : "mixed"}, last ${h.window_min} min`;
+  $("ndsi-minute").textContent = ai.minute == null ? "" : `Last full minute: ${sign(ai.minute)}`;
+  $("ndsi-spark").innerHTML = ai.hourly ? `<svg width="120" height="24" viewBox="0 0 120 24" role="img"
+    aria-label="hourly acoustic index, last 24 hours"><line x1="0" y1="12" x2="120" y2="12" stroke="var(--line)"/>` +
+    ai.hourly.map((v, i) => v == null ? "" : `<rect x="${i * 5}" y="${v > 0 ? 12 - v * 11 : 12}" width="4"
+      height="${Math.max(1, Math.abs(v) * 11)}" fill="var(--dim)"/>`).join("") + "</svg>" : "";
 
   const ev = s.events || [];
   $("events").innerHTML = ev.length ? ev.map(e => {

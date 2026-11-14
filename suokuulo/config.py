@@ -53,6 +53,8 @@ class Config:
     timezone: str = "Europe/Helsinki"     # days, hours and midnight reset
     # disturbance pressure: reported apart, never lowers health
     pressure_minutes: tuple = (5, 15)     # disturbed minutes in the last hour: Moderate, High
+    ndsi_anthro_hz: tuple = (1000, 2000)  # acoustic index bands; shown apart, never in health
+    ndsi_bio_hz: tuple = (2000, 8000)
     alarm_clear_s: float = 20             # machinery alert clears this long after its last hit
     silence_s: float = 1800               # alert after this long without a bird
     # outputs
