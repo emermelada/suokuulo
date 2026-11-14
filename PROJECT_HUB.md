@@ -9,13 +9,12 @@ Finland has drained about half of its original mires for forestry and peat.
 Restoring them, by blocking ditches so the peat rewets, stops carbon loss and
 brings back wildlife. But checking whether a restoration works means sending
 people out to listen, a few mornings a year. Waders and other open-bog birds
-return when a mire recovers; machinery and gunfire mean disturbance.
+return when a mire recovers.
 
-SuoKuulo ("suo" = bog, "kuulo" = hearing) is a small listening station. It runs
-BirdNET on the board itself, turns what it hears into a soundscape health
-score and a separate disturbance report, shows health on the LED matrix,
-sounds an alarm on machinery, and serves a local dashboard. No audio and no
-data leave the device.
+SuoKuulo ("suo" = bog, "kuulo" = hearing) is a small listening station left
+alone on the bog. It runs BirdNET on the board itself, turns the birds it hears
+into a soundscape health score, and sends a short hourly summary over LoRa to
+the restoration team's office. No audio leaves the device.
 
 ## How it works
 
@@ -23,78 +22,92 @@ data leave the device.
    every 2 s and goes, high-passed at 1 kHz, to BirdNET v2.4 on the UNO Q's
    Linux side.
 2. BirdNET scores 6522 labels at once. We keep 12 bog indicator species (8
-   breeding waders and open-bog birds, 2 migrants, 2 resident grouse) and 4
-   disturbance labels (Engine, Power tools, Gun, Human vocal), each judged on
-   its own, so a bird is still counted while people talk.
-3. A label is confirmed on 2 consecutive windows or one strong window, then
-   cools down for 30 s. Engine, power tools and gun are pooled into one
-   machinery signal.
-4. Two separate outputs:
-   - **Soundscape health (0-100), birds only.** It compares what we heard in
-     the last hour with what a healthy bog sounds like at this season and time
-     of day: 60 % *richness* (share of the expected species heard, golden
-     plover weighted 3) and 40 % *activity* (minutes each species was heard vs
-     expected). The expectation starts from `config/baseline.yaml` and is
-     learned from the device's own log after 3 days.
-   - **Disturbance pressure.** People, machinery and gunshots per day, and a
-     Low/Moderate/High level from minutes disturbed in the last hour. It never
-     lowers health. People show as "People nearby"; only machinery and
-     gunshots raise the alert.
-5. The LED matrix shows the health number, plus a small corner block during a
-   machinery alert; the buzzer chirps for birds (twice for the golden plover)
-   and sounds a siren for machinery.
-6. Every event (label, time, confidence, never audio) goes to an append-only
-   CSV on the device; daily counters are rebuilt from it after a restart.
+   breeding waders and open-bog birds, 2 migrants, 2 resident grouse), each
+   judged on its own, so two birds calling together are both counted.
+3. A species is confirmed on 2 consecutive windows or one strong window, then
+   cools down for 30 s.
+4. **Soundscape health (0-100).** It compares what was heard in the last hour
+   with what a healthy bog sounds like at this season and time of day: 60 %
+   *richness* (share of the expected species heard, golden plover weighted 3)
+   and 40 % *activity* (minutes each species was heard vs expected). The
+   expectation starts from `config/baseline.yaml` and is learned from the
+   device's own log after 3 days.
+5. Every hour the Linux side hands a summary to the MCU, which packs it into a
+   16-byte LoRa payload: health, richness, activity, which species were heard
+   today, detections, uptime and status.
+6. The MCU also watches the Linux side. If the analysis stops sending
+   heartbeats for 60 s it sends a "Linux down" payload, keeps an hourly
+   heartbeat going, and reports when the analysis recovers. The office can
+   tell "device dead" (silence) from "device alive, analysis down" from
+   "healthy but quiet".
+7. Every detection (species, time, confidence, never audio) goes to an
+   append-only CSV on the device; daily counters are rebuilt from it after a
+   restart. Anyone on the same network can open the dashboard on port 7000.
+
+## Which brain does what
+
+```
+            Linux side (Qualcomm QRB2210, Debian, App Lab container)
+ USB mic ─> 3 s windows ─> 1 kHz high-pass ─> BirdNET v2.4 (TFLite)
+                                               │ detections
+                          smoothing ─> health vs seasonal baseline ─> events.csv
+                                               │                    └> dashboard :7000
+                          Bridge (RPC over the internal UART)
+                           │ summary (hourly)        │ heartbeat (every 10 s)
+            ───────────────┼─────────────────────────┼──────────────────────────
+            MCU side (STM32U585, Zephyr sketch)      v
+                     16-byte payload encoder <── watchdog: linux_down / heartbeat / recovered
+                           │
+                     LoRa radio (SX1276/RFM95 hook; today: hex on the MCU serial)
+                     LED matrix: health number + TX icon      Buzzer: startup beep
+```
+
+| Linux | MCU |
+| --- | --- |
+| audio capture, high-pass, BirdNET | LoRa payload encoding and transmit hook |
+| smoothing, health score, learned baseline | watchdog of the Linux side, reported over LoRa |
+| events.csv, daily counters, dashboard | LED matrix (health, TX), startup beep |
+
+The core package `suokuulo/` has no Arduino imports and runs the same on a
+laptop with file or mic input. Only `applab/python/main.py` and the sketch are
+board specific.
 
 ## All year round
 
 Most indicators are summer migrants, a point raised by a peatland expert who
-reviewed the idea. The station keeps working when they leave:
+reviewed the idea. The station keeps reporting when they leave:
 
 - Spring and autumn: whooper swan and spotted redshank join the expected
   list. Taiga bean goose and ruff were tested and left out (2/5 and 0/5 clips
   confirmed).
 - Winter: willow ptarmigan and black grouse are expected, but so rarely that
-  health reads "Off season (low bird activity expected)". The dashboard then
-  leads with disturbance: snowmobiles (Engine) and hunting (Gun).
+  health reads "Off season (low bird activity expected)"; the uplink keeps
+  reporting what is heard and that the device is alive.
 - An acoustic index (NDSI) compares bird/insect frequencies with engine/voice
   frequencies every minute. It needs no species and runs all year, shown
   apart from health.
 
 ## What is new compared with rainforest acoustic monitoring
 
-Acoustic monitoring of birds and chainsaws is proven in rainforests
-(Rainforest Connection streams audio from solar "guardians" to the cloud).
-SuoKuulo's contribution is the combination for boreal peatland restoration:
+Acoustic monitoring of birds is proven in rainforests (Rainforest Connection
+streams audio from solar "guardians" to the cloud). SuoKuulo's contribution is
+the combination for boreal peatland restoration:
 
-- a health score built for restoration: species expected on a healthy bog,
-  by season and time of day, learned per site, so before/after rewetting can
-  be compared on the same device;
-- everything on a low-cost board, offline: no audio leaves it, people are
-  stored only as a label, and it works where there is no network;
-- bird health and disturbance kept apart, so a noisy day does not read as a
-  degraded bog.
+- a health score built for restoration: species expected on a healthy bog, by
+  season and time of day, learned per site, so before/after rewetting can be
+  compared on the same device;
+- everything on one low-cost board, offline, with a few bytes an hour over
+  LoRa instead of streaming audio;
+- both brains of the UNO Q used for what they are good at: Linux runs the
+  model, the MCU owns the radio and watches that the model is alive.
 
-## Architecture
+## Power
 
-```
- USB mic ──> [ Linux side (Python, App Lab container) ]                      [ MCU side (Zephyr sketch) ]
-             AppLabMicSource ─ 3 s windows every 2 s                           LED matrix 8x13
-                  │                                                              - health digits + bar
-             BirdNetClassifier (1 kHz high-pass, BirdNET v2.4 TFLite)           - corner block on machinery alert
-                  │  Detection(label, kind, confidence)                         Modulino Buzzer (Qwiic, Wire1)
-             Smoother (2 consecutive / 1 strong, cooldown, machinery pooled)     - startup beep
-                  │ events                                                       - chirp / double chirp
-             Soundscape: health vs baseline.yaml, disturbance pressure,          - siren while machinery alert
-                         daily counters ──┐
-                                     BridgeDisplay ── RouterBridge ──────────────>
-                                     EventLog ── events.csv (rebuilt on start)
-                                     State ── WebUI brick :7000 /api/state + index.html  <── phone on the hotspot
-```
-
-The core package `suokuulo/` has no Arduino imports and runs the same on a
-laptop with file or mic input. Only `applab/python/main.py` and the sketch are
-board specific.
+The UNO Q's Linux side cannot be put to sleep, so the board draws power around
+the clock. A field unit therefore runs on battery + solar panel. Measured
+draw: [X] W (TODO: measure at the board's USB-C input while listening). The
+next version adds an external power timer that switches the board on for the
+dawn and dusk chorus only, which is when most indicator birds call.
 
 ## Parts
 
@@ -102,11 +115,10 @@ board specific.
 | --- | --- |
 | Arduino UNO Q, 2 GB variant | Linux (Qualcomm) + MCU (STM32) on one board; 1.70 GB usable RAM |
 | Arduino USB-C hub | stick-shaped, PD power input |
-| Official Arduino power supply | powers the hub and board |
+| Official Arduino power supply | powers the hub and board (field: battery + solar) |
 | USB microphone | model: TODO |
-| Arduino Modulino Buzzer (ABX00108) | Qwiic cable to the board's Qwiic connector |
-
-Measured power draw: TODO (W)
+| Arduino Modulino Buzzer (ABX00108) | Qwiic cable to the board's Qwiic connector; startup beep |
+| LoRa module, SX1276/RFM95 (planned) | not fitted yet; payloads are printed on the MCU serial |
 
 ## Results
 
@@ -121,18 +133,25 @@ time; full tables and the before/after comparison in `eval_results.md`):
 | birds under equal-level speech | - | 74 % |
 | two species overlaid, both confirmed | - | 51 of 66 pairs |
 | seasonal species (5 clips each): whooper swan, spotted redshank, willow ptarmigan, black grouse | - | 4, 5, 4, 5 of 5 |
-| ESC-50 chainsaw / engine clips confirmed | 4 / 0 of 10 | 9 / 2 of 10 |
-| machinery false alarms on 121 non-machinery clips | 0 | 0 |
-| rfcx/frugalai field chainsaws (3 s clips) | 0 / 20 | 0 / 20 |
 
-On the board (2026-11-14): 387 ms inference per window, phone playback 25 cm
-from the mic confirmed curlew (69 %), crane (73 %) and wood sandpiper (82 %);
-a golden plover recording was missed. Board RAM: the `[stats]` log line and the
-dashboard footer show it; laptop measurement of the whole app: 238 MB RSS.
+On the board (2026-11-14): about 465 ms inference per window with the
+high-pass filter (387 ms without), 631 MB of 1738 MB RAM in use, the app 256 MB.
+Phone playback 25 cm from the mic confirmed curlew (69 %), crane (73 %) and
+wood sandpiper (82 %); a golden plover recording was missed.
 
-Weak spots: engines and short field chainsaw clips; the expected-activity
-numbers are estimates until the device learns its own; winter health is
-"Off season" by design, with disturbance and the acoustic index carrying on.
+Weak spots: the expected-activity numbers are estimates until the device learns
+its own; no LoRa module fitted yet; the power figure is still to be measured.
+
+## Future work
+
+- **Disturbance detection** (people, machinery, gunshots). The code path is
+  kept behind `disturbance_enabled: false`. BirdNET's machinery labels gave
+  too many misses and false alarms for a field product (engines 2/10, field
+  chainsaws 0/20); a dedicated model such as YAMNet beside BirdNET would be
+  the way back.
+- A real SX1276/RFM95 driver in `radioSend()` and a LoRaWAN network server
+  decoder (`scripts/decode_payload.py` shows the format).
+- Dawn/dusk duty cycling with an external power timer.
 
 ## Credits
 
@@ -140,8 +159,8 @@ numbers are estimates until the device learns its own; winter health is
   Ornithology, and Chemnitz University of Technology), model v2.4.
 - birdnetlib (Joe Weiss), whose package ships the model files we load.
 - Test recordings: Xeno-canto recordists, ESC-50 (Karol Piczak) and its
-  Freesound contributors, Rainforest Connection (rfcx/frugalai). Every clip is
-  listed with recordist, licence and URL in `credits.csv`.
+  Freesound contributors, Rainforest Connection (rfcx/frugalai), LibriSpeech.
+  Every clip is listed with recordist, licence and URL in `credits.csv`.
 - Arduino App Lab, app-bricks-py, Arduino_RouterBridge, Arduino_Modulino.
 
 ## Licence note
