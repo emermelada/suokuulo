@@ -42,8 +42,11 @@ def health(observed, expected, weights, richness_weight=0.6, activity_weight=0.4
             "richness": richness, "activity": activity}
 
 
+OFF_SEASON = "Off season (low bird activity expected)"
+
+
 def health_label(score):
-    return "Off season" if score is None else "Poor" if score < 40 else "Fair" if score < 70 else "Good"
+    return OFF_SEASON if score is None else "Poor" if score < 40 else "Fair" if score < 70 else "Good"
 
 
 class Baseline:
@@ -160,9 +163,11 @@ class Soundscape:
         observed = {s.id: minutes([e for e in self.events if e[1] == s.id and e[0] >= since])
                     for s in self.species if s.kind == "indicator"}
         expected = {s: n * scale for s, n in per_hour.items()}
-        h = health(observed, expected, weights, c.richness_weight, c.activity_weight) or \
+        off_season = sum(per_hour.values()) < c.off_season_below  # e.g. winter: a number would mislead
+        h = (not off_season and health(observed, expected, weights, c.richness_weight, c.activity_weight)) or \
             {"score": None, "richness": None, "activity": None}
-        return {**h, "label": health_label(h["score"]), "profile": self.baseline.profile(local.date()),
+        return {**h, "label": health_label(h["score"]), "off_season": h["score"] is None,
+                "profile": self.baseline.profile(local.date()),
                 "baseline": self.baseline.source(), "window_min": c.score_window_min,
                 "observed": observed, "expected": {s: round(e, 2) for s, e in expected.items() if e > 0}}
 

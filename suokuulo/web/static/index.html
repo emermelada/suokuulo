@@ -26,6 +26,8 @@
          max-width: 1280px; margin: 0 auto; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
   .wide { grid-column: 1 / -1; }
+  /* Off season: disturbance is what the station mainly reports, so it goes first. */
+  main.off-season #dist-card { order: -1; }
   h2 { margin: 0 0 12px; font-size: .78rem; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .09em; }
   /* Health */
   .hero { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
@@ -85,7 +87,7 @@
     <span class="badge">offline, on-device</span>
   </div>
 </header>
-<main>
+<main id="main">
   <section class="card" aria-labelledby="h-health">
     <h2 id="h-health">Soundscape health</h2>
     <div class="hero">
@@ -106,7 +108,7 @@
       </div>
     </div>
   </section>
-  <section class="card" aria-labelledby="h-dist">
+  <section class="card" id="dist-card" aria-labelledby="h-dist">
     <h2 id="h-dist">Disturbance pressure</h2>
     <div class="level"><b id="level">--</b><span class="empty" id="hour"></span></div>
     <div class="alert" id="alert">No active alert</div>
@@ -166,13 +168,16 @@ function render(s) {
   $("dot").className = "dot " + (s.status === "listening" ? "listening" : s.status === "mic error" ? "error" : "");
 
   $("score").textContent = h.score ?? "--";
-  $("label").textContent = h.label || "waiting";
+  $("label").textContent = h.off_season ? "Off season" : h.label || "waiting";  // full label below the bars
   $("arc").setAttribute("stroke-dasharray", `${(h.score || 0) / 100 * 326.7} 327`);
   $("rich-v").textContent = pct(h.richness);
   $("act-v").textContent = pct(h.activity);
   $("rich").style.width = pct(h.richness ?? 0);
   $("act").style.width = pct(h.activity ?? 0);
-  $("facts").textContent = h.profile ? `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min` : "";
+  $("main").classList.toggle("off-season", !!h.off_season);
+  $("facts").textContent = !h.profile ? "" : h.off_season
+    ? `${h.label}. Profile: ${h.profile}: no health number now; disturbance monitoring carries on.`
+    : `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min`;
 
   const d = s.disturbance || {groups: []};
   $("level").textContent = d.level || "--";

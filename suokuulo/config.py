@@ -48,6 +48,8 @@ class Config:
     richness_weight: float = 0.6
     activity_weight: float = 0.4
     learn_min_days: int = 3               # days of events.csv before the baseline is learned
+    off_season_below: float = 3           # expected detection-minutes per hour (all species) under
+                                          # which health shows "Off season" instead of a number
     timezone: str = "Europe/Helsinki"     # days, hours and midnight reset
     # disturbance pressure: reported apart, never lowers health
     pressure_minutes: tuple = (5, 15)     # disturbed minutes in the last hour: Moderate, High

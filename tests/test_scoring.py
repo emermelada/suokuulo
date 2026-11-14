@@ -67,7 +67,7 @@ def test_richness_and_activity_math():
     full = health({"golden_plover": 5, "curlew": 9, "whimbrel": 3}, expected, weights)
     assert full == {"score": 100, "richness": 1.0, "activity": 1.0}  # both capped at 1
     assert health({}, {"curlew": 0}, weights) is None  # nothing expected: no score
-    assert [health_label(s) for s in (None, 39, 40, 69, 70)] == ["Off season", "Poor", "Fair", "Fair", "Good"]
+    assert [health_label(s) for s in (39, 40, 69, 70)] == ["Poor", "Fair", "Fair", "Good"]
 
 
 def test_profile_by_date_and_override():
@@ -167,3 +167,22 @@ def test_baseline_learned_after_three_days(tmp_path):
     s.update([])
     assert s.baseline.source() == "learned from 3 days"
     assert s.health()["expected"] == {"golden_plover": 4}  # median of 4, 6, 0; curlew only at noon
+
+
+@pytest.mark.parametrize("month", [11, 12, 1, 2])
+def test_winter_profile_by_date(month):
+    assert Baseline(ROOT / "config/baseline.yaml").profile(date(2026, month, 10)) == "winter"
+
+
+def test_winter_is_off_season_and_disturbance_becomes_the_main_output():
+    clock = Clock(at(2026, 1, 15, 9, 0))
+    s = soundscape(clock)  # profile picked by month
+    s.update([noise("engine")])  # a snowmobile
+    snap = s.snapshot()
+    h = snap["health"]
+    assert (h["profile"], h["off_season"], h["score"]) == ("winter", True, None)
+    assert h["label"] == "Off season (low bird activity expected)"
+    assert s.alarm and next(g for g in snap["disturbance"]["groups"] if g["group"] == "machinery")["events_today"] == 1
+    clock.t = at(2026, 6, 15, 5, 0)  # breeding dawn: a number again
+    assert soundscape(clock).health()["off_season"] is False
+
