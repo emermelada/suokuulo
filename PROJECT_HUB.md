@@ -22,7 +22,8 @@ data leave the device.
 1. A USB microphone records continuously. A 3 s window (48 kHz mono) starts
    every 2 s and goes, high-passed at 1 kHz, to BirdNET v2.4 on the UNO Q's
    Linux side.
-2. BirdNET scores 6522 labels at once. We keep 8 bog indicator species and 4
+2. BirdNET scores 6522 labels at once. We keep 12 bog indicator species (8
+   breeding waders and open-bog birds, 2 migrants, 2 resident grouse) and 4
    disturbance labels (Engine, Power tools, Gun, Human vocal), each judged on
    its own, so a bird is still counted while people talk.
 3. A label is confirmed on 2 consecutive windows or one strong window, then
@@ -44,6 +45,21 @@ data leave the device.
    and sounds a siren for machinery.
 6. Every event (label, time, confidence, never audio) goes to an append-only
    CSV on the device; daily counters are rebuilt from it after a restart.
+
+## All year round
+
+Most indicators are summer migrants, a point raised by a peatland expert who
+reviewed the idea. The station keeps working when they leave:
+
+- Spring and autumn: whooper swan and spotted redshank join the expected
+  list. Taiga bean goose and ruff were tested and left out (2/5 and 0/5 clips
+  confirmed).
+- Winter: willow ptarmigan and black grouse are expected, but so rarely that
+  health reads "Off season (low bird activity expected)". The dashboard then
+  leads with disturbance: snowmobiles (Engine) and hunting (Gun).
+- An acoustic index (NDSI) compares bird/insect frequencies with engine/voice
+  frequencies every minute. It needs no species and runs all year, shown
+  apart from health.
 
 ## What is new compared with rainforest acoustic monitoring
 
@@ -99,11 +115,12 @@ time; full tables and the before/after comparison in `eval_results.md`):
 
 | | before fixes | now |
 | --- | --- | --- |
-| bird clips confirmed (8 species, 81 clips) | 78 % | 88 % |
+| bird clips confirmed (8 breeding species, 81 clips) | 78 % | 88 % |
 | seconds of audio to the first bird event (median) | - | 3 |
 | golden plover confirmed on non-plover clips | 0 | 0 |
 | birds under equal-level speech | - | 74 % |
-| two species overlaid, both confirmed | - | 25 of 28 pairs |
+| two species overlaid, both confirmed | - | 51 of 66 pairs |
+| seasonal species (5 clips each): whooper swan, spotted redshank, willow ptarmigan, black grouse | - | 4, 5, 4, 5 of 5 |
 | ESC-50 chainsaw / engine clips confirmed | 4 / 0 of 10 | 9 / 2 of 10 |
 | machinery false alarms on 121 non-machinery clips | 0 | 0 |
 | rfcx/frugalai field chainsaws (3 s clips) | 0 / 20 | 0 / 20 |
@@ -114,9 +131,8 @@ a golden plover recording was missed. Board RAM: the `[stats]` log line and the
 dashboard footer show it; laptop measurement of the whole app: 238 MB RSS.
 
 Weak spots: engines and short field chainsaw clips; the expected-activity
-numbers are estimates until the device learns its own; most indicators are
-summer migrants, so in winter health shows "Off season" and disturbance
-monitoring carries on.
+numbers are estimates until the device learns its own; winter health is
+"Off season" by design, with disturbance and the acoustic index carrying on.
 
 ## Credits
 

@@ -18,11 +18,21 @@ data leaves the device.
     minutes expected, capped at 100 %. A minute counts once however often a
     bird calls, so one loud bird cannot inflate the score.
   - Health = 60 % richness + 40 % activity. 0-39 Poor, 40-69 Fair, 70-100 Good.
-    No species expected (winter) shows "Off season".
-- **Baseline.** Starting estimates per season (breeding May-Jul, migration
-  Mar-Apr and Aug-Oct, winter) and part of day. After 3 days of `events.csv`
-  the device learns its own: the median minutes per hour for each species at
-  that hour of day.
+- **Baseline.** Starting estimates per season and part of day. After 3 days of
+  `events.csv` the device learns its own: the median minutes per hour for
+  each species at that hour of day.
+  - Breeding (May-Jul): the 8 waders and open-bog birds.
+  - Migration (Mar-Apr, Aug-Oct): the same plus whooper swan and spotted
+    redshank.
+  - Winter (Nov-Feb): only willow ptarmigan and black grouse, which call
+    little. When fewer than 3 detection-minutes per hour are expected in all,
+    health reads "Off season (low bird activity expected)" instead of a
+    number, and the dashboard puts disturbance first (snowmobiles show as
+    Engine, hunting as Gun).
+- **Acoustic index (NDSI).** Per minute, sound energy at 2-8 kHz (birds,
+  insects) against 1-2 kHz (engines, voices): -1 noise-dominated, +1
+  nature-dominated. It needs no species, so it works all year. Shown on its
+  own; it never changes health.
 - **Disturbance never lowers health.** People ("People nearby"), machinery
   (engine, power tools) and gunshots are counted per day, and the minutes
   disturbed in the last hour give a Low/Moderate/High pressure level. Only
@@ -85,6 +95,8 @@ unknown keys fail at startup.
 | `score_window_min` | 60 / 10 | health window |
 | `richness_weight`, `activity_weight` | 0.6, 0.4 | health split |
 | `learn_min_days` | 3 | days of history before the baseline is learned |
+| `off_season_below` | 3 | expected detection-minutes per hour (all species) under which health shows "Off season" |
+| `ndsi_anthro_hz`, `ndsi_bio_hz` | [1000, 2000], [2000, 8000] | acoustic index bands |
 | `pressure_minutes` | [5, 15] | disturbed minutes in the last hour for Moderate, High |
 | `alarm_clear_s`, `silence_s` | 20, 1800 | alert clears 20 s after the last machinery hit; silence alert after 30 min without birds |
 | `buzzer_startup`, `buzzer_alerts` | true, false / true | startup beep; bird chirps + machinery siren |
