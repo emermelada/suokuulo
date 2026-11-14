@@ -56,7 +56,7 @@ class Pipeline:
                     self.log.write(now_iso, "", "", "", score, "silence")
         if self.state:
             self.state.update(now_iso, events, alerts, score, self.scorer.alarm,
-                              self.scorer.species_heard(), inference_ms)
+                              self.scorer.species_heard(), sum(self.inference_ms) / len(self.inference_ms))
         return events
 
     def run(self, windows):

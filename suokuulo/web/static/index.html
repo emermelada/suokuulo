@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuoKuulo</title>
+<style>
+  :root { --bg: #0e1110; --panel: #181c1a; --text: #eef2ef; --dim: #9aa69f;
+          --red: #ff5a52; --amber: #ffb224; --green: #3ddc84; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 22px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; }
+  h1 { margin: 0; font-size: 1.6rem; letter-spacing: .02em; }
+  h1 span { color: var(--dim); font-weight: 400; }
+  .badge { border: 2px solid var(--green); color: var(--green); border-radius: 999px;
+           padding: 4px 14px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+  #alarm { display: none; margin: 0 24px; padding: 14px 20px; border-radius: 12px;
+           background: var(--red); color: #160303; font-size: 1.8rem; font-weight: 800;
+           animation: blink .5s steps(1) infinite; }
+  #alarm.on { display: block; }
+  @keyframes blink { 50% { opacity: .25; } }
+  main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; padding: 24px; }
+  .card { background: var(--panel); border-radius: 16px; padding: 20px 24px; min-width: 0; }
+  #scorecard { border-top: 14px solid var(--dim); text-align: center; }
+  #score { font-size: min(38vh, 30vw); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  #band { font-size: 1.8rem; font-weight: 700; letter-spacing: .08em; }
+  .label { color: var(--dim); font-size: .85rem; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 8px; }
+  #heard { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; margin-top: 16px; min-height: 2.2em; }
+  .chip { background: #24302a; border-radius: 999px; padding: 4px 14px; font-size: 1rem; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; gap: 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid #262c29; }
+  li .t { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .9rem; }
+  li .n { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
+  .disturbance .n { color: var(--red); }
+  .indicator .n { color: var(--green); }
+  .empty { color: var(--dim); padding: 8px 0; }
+  footer { color: var(--dim); font-size: .8rem; padding: 0 24px 24px; }
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+    header, footer { padding-left: 16px; padding-right: 16px; }
+    #alarm { margin: 0 16px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>SuoKuulo <span>peatland soundscape</span></h1>
+  <div class="badge">● offline, on-device</div>
+</header>
+<div id="alarm" role="alert">DISTURBANCE</div>
+<main>
+  <section class="card" id="scorecard">
+    <p class="label">Soundscape health</p>
+    <div id="score">--</div>
+    <div id="band">waiting</div>
+    <p class="label" style="margin-top:20px">Indicator species, last 10 min</p>
+    <div id="heard"></div>
+  </section>
+  <div style="display:grid; gap:24px; align-content:start; min-width:0">
+    <section class="card"><p class="label">Recent detections</p><ul id="recent"></ul></section>
+    <section class="card"><p class="label">Alerts</p><ul id="alerts"></ul></section>
+  </div>
+</main>
+<footer id="foot">connecting…</footer>
+<script>
+const $ = id => document.getElementById(id);
+const nice = s => s ? s[0].toUpperCase() + s.slice(1).replace(/_/g, " ") : "";
+const hhmm = iso => iso.slice(11, 19);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+
+function list(el, items, row) {
+  el.innerHTML = items.length ? items.slice(0, 8).map(row).join("") : '<div class="empty">none yet</div>';
+}
+
+async function tick() {
+  try {
+    const s = await (await fetch("/api/state", {cache: "no-store"})).json();
+    const band = s.score === null ? ["--dim", "waiting"] : s.score < 40 ? ["--red", "DEGRADED"]
+               : s.score < 70 ? ["--amber", "FAIR"] : ["--green", "HEALTHY"];
+    const color = `var(${band[0]})`;
+    $("score").textContent = s.score ?? "--";
+    $("score").style.color = $("band").style.color = $("scorecard").style.borderTopColor = color;
+    $("band").textContent = band[1];
+    $("heard").innerHTML = s.species_heard_10min.map(x => `<span class="chip">${esc(nice(x))}</span>`).join("");
+    const last = s.alerts.find(a => a.type === "disturbance");
+    $("alarm").textContent = "DISTURBANCE" + (last ? ": " + nice(last.label) : "");
+    $("alarm").classList.toggle("on", s.alarm);
+    list($("recent"), s.recent, d => `<li class="${esc(d.kind)}"><span class="t">${esc(hhmm(d.time))}</span>
+      <span class="n">${esc(nice(d.label))}</span><span>${Math.round(d.confidence * 100)}%</span></li>`);
+    list($("alerts"), s.alerts, a => `<li class="disturbance"><span class="t">${esc(hhmm(a.time))}</span>
+      <span class="n">${esc(nice(a.type))}${a.label ? ": " + esc(nice(a.label)) : ""}</span></li>`);
+    $("foot").textContent = `uptime ${Math.floor(s.uptime_s / 60)} min ${s.uptime_s % 60} s · inference ` +
+      `${s.inference_ms ?? "--"} ms/window · no audio leaves this device`;
+  } catch (e) {
+    $("foot").textContent = "dashboard lost contact with the monitor, retrying…";
+  }
+}
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>

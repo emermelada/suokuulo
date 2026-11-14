@@ -1,5 +1,6 @@
 """Laptop entrypoint. See README.md for the commands."""
 import argparse
+import sys
 
 import numpy as np
 
@@ -9,6 +10,8 @@ from suokuulo.classifier import MockClassifier
 from suokuulo.display import ConsoleDisplay
 from suokuulo.eventlog import EventLog
 from suokuulo.pipeline import Pipeline, simulated
+from suokuulo.state import State
+from suokuulo.web.server import serve
 
 # --mock: one list of (label, confidence) per 3 s window. Score rises, then an
 # engine trips the alarm, which clears 20 s after the last engine hit.
@@ -27,8 +30,12 @@ def main():
     ap.add_argument("--config", default="config/laptop.yaml")
     ap.add_argument("--mock", action="store_true", help="scripted detections, no model, no audio")
     ap.add_argument("--input", help="override audio file/folder")
+    ap.add_argument("--realtime", action="store_true", help="pace file replay at one window per 3 s")
+    ap.add_argument("--loop", action="store_true", help="loop file replay forever")
+    ap.add_argument("--no-web", action="store_true", help="do not start the dashboard")
     ap.add_argument("-v", "--verbose", action="store_true", help="print raw detections per window")
     args = ap.parse_args()
+    sys.stdout.reconfigure(line_buffering=True)  # live console when piped to a file
 
     cfg = config.load(args.config)
     species = config.load_species(cfg.species_file)
@@ -42,9 +49,15 @@ def main():
 
     if args.input:
         cfg.source, cfg.input = "file", args.input
+    cfg.realtime |= args.realtime
+    cfg.loop |= args.loop
     from suokuulo.classifier import BirdNetClassifier
     classifier = BirdNetClassifier(species, cfg.min_conf)
-    Pipeline(cfg, species, classifier, display, log=EventLog(cfg.log_file), verbose=args.verbose).run(make_source(cfg).windows())
+    state = None if args.no_web else State()
+    if state:
+        serve(state, cfg.web_host, cfg.web_port)
+    Pipeline(cfg, species, classifier, display, state=state, log=EventLog(cfg.log_file),
+             verbose=args.verbose).run(make_source(cfg).windows())
 
 
 if __name__ == "__main__":
