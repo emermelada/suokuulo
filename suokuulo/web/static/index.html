@@ -26,8 +26,6 @@
          max-width: 1280px; margin: 0 auto; }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
   .wide { grid-column: 1 / -1; }
-  /* Off season: disturbance is what the station mainly reports, so it goes first. */
-  main.off-season #dist-card { order: -1; }
   h2 { margin: 0 0 12px; font-size: .78rem; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .09em; }
   /* Health */
   .hero { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
@@ -42,19 +40,11 @@
   .track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
   .fill { height: 100%; width: 0; background: var(--accent); }
   .facts { color: var(--dim); font-size: .85rem; margin: 4px 0 0; }
-  /* Disturbance */
-  .level { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
-  .level b { font-size: 1.6rem; }
-  .alert { display: inline-block; margin: 6px 0 12px; padding: 3px 10px; border-radius: 6px; font-size: .85rem;
-           border: 1px solid var(--line); color: var(--dim); }
-  .alert.on { border-color: var(--poor); color: var(--poor); font-weight: 600; }
   table { width: 100%; border-collapse: collapse; }
   th { text-align: left; font-weight: 500; color: var(--dim); font-size: .8rem; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
   td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
   tr:last-child td { border-bottom: 0; }
   td.n, th.n { text-align: right; }
-  .people { color: var(--dim); }
-  .machinery, .gunshot { color: var(--poor); }
   /* Species */
   .sp-name b { font-weight: 600; }
   .sp-name i { display: block; color: var(--dim); font-size: .82rem; }
@@ -110,16 +100,6 @@
         <p class="facts" id="facts"></p>
       </div>
     </div>
-  </section>
-  <section class="card" id="dist-card" aria-labelledby="h-dist">
-    <h2 id="h-dist">Disturbance pressure</h2>
-    <div class="level"><b id="level">--</b><span class="empty" id="hour"></span></div>
-    <div class="alert" id="alert">No active alert</div>
-    <table>
-      <thead><tr><th>Type</th><th class="n">Events today</th><th class="n">Minutes today</th><th class="n hide-narrow">Last</th></tr></thead>
-      <tbody id="groups"></tbody>
-    </table>
-    <p class="facts" id="last-dist"></p>
   </section>
   <section class="card wide" aria-labelledby="h-species">
     <h2 id="h-species">Indicator species</h2>
@@ -186,20 +166,9 @@ function render(s) {
   $("act-v").textContent = pct(h.activity);
   $("rich").style.width = pct(h.richness ?? 0);
   $("act").style.width = pct(h.activity ?? 0);
-  $("main").classList.toggle("off-season", !!h.off_season);
   $("facts").textContent = !h.profile ? "" : h.off_season
-    ? `${h.label}. Profile: ${h.profile}: no health number now; disturbance monitoring carries on.`
+    ? `${h.label}. Profile: ${h.profile}: few indicator birds are expected now, so no health number.`
     : `Profile: ${h.profile} · baseline: ${h.baseline} · window: last ${h.window_min} min`;
-
-  const d = s.disturbance || {groups: []};
-  $("level").textContent = d.level || "--";
-  $("hour").textContent = d.hour_minutes == null ? "" : `${d.hour_minutes} disturbed min in the last hour (people not counted)`;
-  $("alert").textContent = d.alarm ? "Machinery / gunshot alert active" : "No active alert";
-  $("alert").className = "alert" + (d.alarm ? " on" : "");
-  $("groups").innerHTML = d.groups.map(g => `<tr class="${esc(g.group)}"><td>${esc(g.name)}</td>
-    <td class="n num">${g.events_today}</td><td class="n num">${g.minutes_today}</td>
-    <td class="n num hide-narrow">${hhmm(g.last)}</td></tr>`).join("");
-  $("last-dist").textContent = d.last ? `Last: ${d.last.group === "people" ? "People nearby" : d.last.name} at ${hhmm(d.last.time)}` : "";
 
   $("species").innerHTML = (s.species || []).map(r => {
     const cls = r.heard_in_window ? "" : r.expected ? "missing" : "quiet";
@@ -222,8 +191,7 @@ function render(s) {
 
   const ev = s.events || [];
   $("events").innerHTML = ev.length ? ev.map(e => {
-    const name = e.group === "people" ? "People nearby" : e.name;
-    return `<tr><td class="t num">${esc((e.time || "").slice(11, 19))}</td><td class="${esc(e.group)}">${esc(name)}</td>
+    return `<tr><td class="t num">${esc((e.time || "").slice(11, 19))}</td><td>${esc(e.name)}</td>
       <td class="n num">${Math.round(e.confidence * 100)}%</td></tr>`;
   }).join("") : '<tr><td class="empty">No events yet</td></tr>';
 

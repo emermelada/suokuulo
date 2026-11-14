@@ -1,4 +1,7 @@
-"""Soundscape health and disturbance pressure: two separate outputs.
+"""Soundscape health from indicator birds. Disturbance pressure (people,
+machinery, gunshots) is an optional code path behind disturbance_enabled
+(default off, future work): when off, disturbance events are dropped here and
+never reach the dashboard, the log or the MCU.
 
 Health (0-100) uses indicator birds only, compared with what a healthy site is
 expected to sound like (config/baseline.yaml), over the last score_window_min:
@@ -125,11 +128,14 @@ class Soundscape:
         self.group = {s.id: s.group for s in species}
         self.baseline = Baseline(cfg.baseline_file, cfg.baseline_profile)
         t = now()
-        self.events = [e for e in read_log(log_path) if e[0] > t - KEEP_S]  # rebuild after restart
+        self.events = [e for e in read_log(log_path) if e[0] > t - KEEP_S and self.kept(e[2])]  # after a restart
         self.bands = {}  # minute -> [anthrophony, biophony] power summed over its windows (not logged)
         self.day = None
         self.alarm, self.silent = False, False
         self.last_alert_hit, self.last_bird = None, t
+
+    def kept(self, kind):
+        return kind == "indicator" or self.cfg.disturbance_enabled
 
     def local(self, t=None):
         return datetime.fromtimestamp(self.now() if t is None else t, self.tz)
@@ -147,6 +153,7 @@ class Soundscape:
             self.day = self.local(t).date()
             self.baseline.learn(read_log(self.log_path), self.day, self.tz, c.learn_min_days)
         alerts = []
+        events = [e for e in events if self.kept(e.kind)]
         for e in events:
             self.events.append((t, e.label, e.kind, e.confidence))
             if self.group.get(e.label) in ALERT_GROUPS:
@@ -228,6 +235,21 @@ class Soundscape:
                          "last": iso(mine[-1] if mine else None),
                          "last_ago_s": round(t - mine[-1][0]) if mine else None, "hourly": hourly})
 
+        names = {s.id: s.label.split("_", 1)[1] for s in self.species}
+
+        def entry(e):
+            return {"time": iso(e), "label": e[1], "name": names.get(e[1], e[1]), "kind": e[2],
+                    "group": self.group.get(e[1], ""), "confidence": round(e[3], 2)}
+
+        snap = {"health": {k: v for k, v in h.items() if k not in ("observed", "expected")},
+                "species": rows, "acoustic_index": self.acoustic_index(),
+                "events": [entry(e) for e in self.events[-20:][::-1]]}
+        if self.cfg.disturbance_enabled:
+            snap["disturbance"] = self.disturbance(t, midnight, iso, entry)
+        return snap
+
+    def disturbance(self, t, midnight, iso, entry) -> dict:
+        """Future work, off by default: per-group counts and a pressure level."""
         groups = []
         for g in GROUP_NAMES:
             mine = [e for e in self.events if self.group.get(e[1]) == g]
@@ -239,17 +261,7 @@ class Soundscape:
         pressing = [e for e in self.events if e[0] > t - 3600 and e[2] == "disturbance" and self.group.get(e[1]) != "people"]
         moderate, high = self.cfg.pressure_minutes
         hour_minutes = minutes(pressing)
-        names = {s.id: s.label.split("_", 1)[1] for s in self.species}
-
-        def entry(e):
-            return {"time": iso(e), "label": e[1], "name": names.get(e[1], e[1]), "kind": e[2],
-                    "group": self.group.get(e[1], ""), "confidence": round(e[3], 2)}
-
         disturbances = [e for e in self.events if e[2] == "disturbance"]
         level = "High" if hour_minutes >= high else "Moderate" if hour_minutes >= moderate else "Low"
-        return {"health": {k: v for k, v in h.items() if k not in ("observed", "expected")},
-                "species": rows,
-                "disturbance": {"alarm": self.alarm, "groups": groups, "hour_minutes": hour_minutes,
-                                "level": level, "last": entry(disturbances[-1]) if disturbances else None},
-                "acoustic_index": self.acoustic_index(),
-                "events": [entry(e) for e in self.events[-20:][::-1]]}
+        return {"alarm": self.alarm, "groups": groups, "hour_minutes": hour_minutes,
+                "level": level, "last": entry(disturbances[-1]) if disturbances else None}

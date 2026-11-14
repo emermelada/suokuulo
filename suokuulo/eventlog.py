@@ -2,7 +2,7 @@
 import csv
 import os
 
-FIELDS = ["iso_time", "label", "kind", "confidence", "score", "alert"]
+FIELDS = ["iso_time", "label", "kind", "confidence", "score"]  # older files also have "alert"
 
 
 class EventLog:
@@ -14,6 +14,6 @@ class EventLog:
         if new:
             self.write(*FIELDS)
 
-    def write(self, iso_time, label, kind, confidence, score, alert):
-        self.writer.writerow([iso_time, label, kind, confidence, score, alert])
+    def write(self, iso_time, label, kind, confidence, score):
+        self.writer.writerow([iso_time, label, kind, confidence, score])
         self.file.flush()

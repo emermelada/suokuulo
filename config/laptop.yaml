@@ -9,16 +9,10 @@ web_port: 8000
 # --demo playlist (also scripts/simulate.py), played in order at real-time pace:
 # [file or folder, max windows (null = all)]. Each bird clip confirms on its own
 # (eval_results.md). Expected with demo.yaml (breeding, 10 min window): health
-# starts at 0 (nothing heard), rises with each species, people and the chainsaw
-# never lower it; the chainsaw raises the machinery alert, which clears ~20 s
-# after the chainsaw stops.
+# starts at 0 (nothing heard) and rises with each species.
 demo:
   - [test_clips/background, 15]                              # 30 s quiet wind
-  - [test_clips/golden_plover/XC1193791.wav, null]           # weight 3, double chirp
-  - [test_clips/human_voice, 10]                             # 20 s of people talking: "People nearby"
+  - [test_clips/golden_plover/XC1193791.wav, null]           # weight 3
   - [test_clips/common_snipe/XC1191555.wav, null]
   - [test_clips/common_crane/XC1174838.wav, null]
-  - [test_clips/power_tools/ESC50-1-19898-A-41.wav, null]    # chainsaw, 15 s from one recording
-  - [test_clips/power_tools/ESC50-1-19898-B-41.wav, null]
-  - [test_clips/power_tools/ESC50-1-19898-C-41.wav, null]    # machinery alert + siren
-  - [test_clips/background, 15]                              # alert clears after 20 s
+  - [test_clips/background, 15]

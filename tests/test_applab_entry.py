@@ -69,8 +69,8 @@ def test_board_entrypoint_wiring(monkeypatch, rate):
         runpy.run_path(str(ROOT / "applab/python/main.py"), run_name="__main__")
     finally:
         log.unlink(missing_ok=True)
-    assert calls[:2] == [("chirp", 2), ("mute", False)]  # startup beep; demo.yaml has buzzer alerts on
-    assert ("chirp", 1) in calls  # golden plover: double chirp
+    assert calls[0] == ("beep", 1)  # startup beep, the buzzer's only sound
+    assert {c[0] for c in calls} == {"beep", "show_score"}
     scores = [c[1] for c in calls if c[0] == "show_score"]
     assert scores[0] == 0 and scores[-1] > 0  # nothing heard yet, then the plover raises health
     state = api["GET", "/api/state"]()

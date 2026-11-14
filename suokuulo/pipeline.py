@@ -10,7 +10,6 @@ from .scoring import ALERT_GROUPS, Soundscape
 from .state import memory
 
 SAMPLE_RATE = 48000
-STARTUP_BEEP = 2  # chirp kind 2: one beep when the app starts
 
 
 class Pipeline:
@@ -36,7 +35,6 @@ class Pipeline:
         events = self.smoother.update(detections)
         group = self.soundscape.group
         alert_hit = any(group.get(d.label) in ALERT_GROUPS for d in self.smoother.hits)
-        prev_alarm = self.soundscape.alarm
         spectrum = getattr(self.classifier, "spectrum", None)  # reuse the high-pass FFT
         spectrum = np.fft.rfft(window) if spectrum is None else spectrum
         bands = band_power(spectrum, (self.cfg.ndsi_anthro_hz, self.cfg.ndsi_bio_hz))
@@ -45,23 +43,19 @@ class Pipeline:
         t = self.now()
         iso = self.soundscape.local(t).isoformat(timespec="seconds")
 
+        events = [e for e in events if self.soundscape.kept(e.kind)]
         for e in events:
             print(f"{iso} window {self.windows:4d} EVENT {e.label} ({e.kind}) conf {e.confidence:.2f} health {score}")
-            if e.kind == "indicator":
-                self.display.chirp(int(e.label == self.cfg.headline_species))
         for a in alerts:
             print(f"{iso} window {self.windows:4d} ALERT {a['type']} {a['label']}")
         self.show_score(score)
-        if self.soundscape.alarm != prev_alarm:  # machinery and gunshots only, never people
-            self.display.alarm(self.soundscape.alarm)
 
         if self.log:  # labels and times only: audio is never stored
             for e in events:
-                self.log.write(iso, e.label, e.kind, f"{e.confidence:.3f}", "" if score is None else score,
-                               "disturbance" if group.get(e.label) in ALERT_GROUPS else "")
+                self.log.write(iso, e.label, e.kind, f"{e.confidence:.3f}", "" if score is None else score)
             for a in alerts:
                 if a["type"] == "silence":
-                    self.log.write(iso, "", "", "", "" if score is None else score, "silence")
+                    self.log.write(iso, "", "silence", "", "" if score is None else score)
         if t - self.stats_at >= 60:
             self.stats_at = t
             ram = memory()
@@ -79,8 +73,7 @@ class Pipeline:
     def run(self, windows):
         if not self.started:  # App.run may call run() again if the mic stream ends
             if self.cfg.buzzer_startup:
-                self.display.chirp(STARTUP_BEEP)
-            self.display.mute(not self.cfg.buzzer_alerts)
+                self.display.beep()
             self.show_score(self.soundscape.health()["score"])
             self.started = True
             if self.state:

@@ -1,7 +1,6 @@
 # UNO Q field deployment. demo.yaml (what applab/python/main.py loads for the
 # demo) and laptop.yaml include this file, so detection settings are the same
-# everywhere. Field defaults: health window 60 min, baseline profile by month,
-# buzzer only beeps at startup (buzzer_alerts: false).
+# everywhere. Field defaults: health window 60 min, baseline profile by month.
 source: applab        # App Lab Microphone peripheral; "file" with input: ... replays clips instead
 device: null          # null = Microphone.USB_MIC_1 (first USB mic)
 classifier: birdnet
@@ -23,7 +22,7 @@ cooldown_s: 30
 # sandpiper clip). Both checked against every other clip in eval_results.md.
 species_hit: {golden_plover: 0.35}
 species_single: {golden_plover: 0.85}
-# Machinery: engine, power tools and gun pooled into one any-disturbance signal
-# (strongest of them per window), confirmed by the same rule. Human voice stays
-# its own label at disturbance_hit (0.35).
+# Disturbance detection is future work (disturbance_enabled defaults to false).
+# If enabled: engine, power tools and gun pooled into one signal at 0.20, human
+# voice alone at disturbance_hit (0.35).
 any_disturbance_hit: 0.20

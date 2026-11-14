@@ -51,7 +51,9 @@ class Config:
     off_season_below: float = 3           # expected detection-minutes per hour (all species) under
                                           # which health shows "Off season" instead of a number
     timezone: str = "Europe/Helsinki"     # days, hours and midnight reset
-    # disturbance pressure: reported apart, never lowers health
+    # disturbance (people, machinery, gunshots): future work, off by default; when
+    # off it appears nowhere (dashboard, events.csv, MCU) and its labels are not scored
+    disturbance_enabled: bool = False
     pressure_minutes: tuple = (5, 15)     # disturbed minutes in the last hour: Moderate, High
     ndsi_anthro_hz: tuple = (1000, 2000)  # acoustic index bands; shown apart, never in health
     ndsi_bio_hz: tuple = (2000, 8000)
@@ -60,8 +62,7 @@ class Config:
     # outputs
     site_name: str = ""
     headline_species: str = "golden_plover"  # gets the double chirp
-    buzzer_startup: bool = True               # one beep when the app starts
-    buzzer_alerts: bool = False               # bird chirps + machinery siren; LED matrix always works
+    buzzer_startup: bool = True               # one beep when the app starts; the buzzer does nothing else
     log_file: str = "events.csv"
     verbose: bool = False                     # print raw detections for every window
     web_host: str = "0.0.0.0"
@@ -89,3 +90,8 @@ def load(path) -> Config:
 
 def load_species(path) -> list[Species]:
     return [Species(**s) for s in yaml.safe_load(Path(path).read_text())["species"]]
+
+
+def active_species(cfg) -> list[Species]:
+    """Species the app scores: indicators, plus disturbance labels only if enabled."""
+    return [s for s in load_species(cfg.species_file) if s.kind == "indicator" or cfg.disturbance_enabled]

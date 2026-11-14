@@ -37,14 +37,8 @@ class BridgeDisplay:
     def show_score(self, score):
         self._call("show_score", int(score))
 
-    def alarm(self, on):
-        self._call("alarm", bool(on))
-
-    def chirp(self, kind):
-        self._call("chirp", int(kind))
-
-    def mute(self, on):
-        self._call("mute", bool(on))
+    def beep(self):
+        self._call("beep", 1)
 
 
 class AppLabMicSource:
@@ -72,10 +66,10 @@ class AppLabMicSource:
 def main():
     sys.stdout.reconfigure(line_buffering=True)
     cfg = config.load(HERE / "config" / CONFIG)
-    species = config.load_species(cfg.species_file)
+    species = config.active_species(cfg)
     cfg.log_file = str(HERE.parent / cfg.log_file)
     print(f"[config] {CONFIG}: site {cfg.site_name!r}, health window {cfg.score_window_min} min, "
-          f"baseline {cfg.baseline_profile or 'by month'}, buzzer alerts {'on' if cfg.buzzer_alerts else 'off'}")
+          f"baseline {cfg.baseline_profile or 'by month'}, disturbance {'on' if cfg.disturbance_enabled else 'off'}")
     # Inside the App Lab container; on the board this is ~/ArduinoApps/suokuulo/events.csv.
     print(f"[log] events.csv at {cfg.log_file}")
 

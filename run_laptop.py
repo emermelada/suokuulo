@@ -17,15 +17,12 @@ from suokuulo.state import State
 from suokuulo.web.server import serve
 
 # --mock: one list of (label, confidence) per window (one window per hop_s).
-# Health rises with two species, then an engine trips the machinery alert, which
-# clears 20 s after the last engine hit; health does not drop.
+# Health rises with two species.
 MOCK_SCRIPT = [
     [], [], [],
     [("golden_plover", 0.81)], [("golden_plover", 0.77)],  # two consecutive hits confirm
     [("common_snipe", 0.72)],                             # one window >= 0.70 confirms at once
-    [("engine", 0.15)],                                # below threshold, not a hit
-    [("engine", 0.62)], [("engine", 0.71)],
-] + [[]] * 12
+] + [[]] * 6
 
 
 def main():
@@ -39,15 +36,13 @@ def main():
     ap.add_argument("--mic", nargs="?", const="mic", choices=["mic", "arecord"],
                     help="live capture: sounddevice (default) or arecord")
     ap.add_argument("--device", help="mic device (sounddevice index/name, or ALSA name for arecord)")
-    ap.add_argument("--mute", action="store_true", help="no chirps or siren (startup beep still plays)")
     ap.add_argument("--no-web", action="store_true", help="do not start the dashboard")
     ap.add_argument("-v", "--verbose", action="store_true", help="print raw detections per window")
     args = ap.parse_args()
     sys.stdout.reconfigure(line_buffering=True)  # live console when piped to a file
 
     cfg = config.load(args.config)
-    cfg.buzzer_alerts &= not args.mute
-    species = config.load_species(cfg.species_file)
+    species = config.active_species(cfg)
     display = ConsoleDisplay(species)
 
     if args.mock:

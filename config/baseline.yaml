@@ -35,6 +35,6 @@ profiles:
       spotted_redshank: {weight: 1, dawn: 3, day: 2, night: 1}
   winter:              # the waders have left; only the grouse stay, and call little.
     months: [11, 12, 1, 2]   # Under off_season_below (3 detection-minutes per hour in all)
-    species:                 # health shows "Off season" and disturbance is the main output.
+    species:                 # health shows "Off season (low bird activity expected)".
       willow_ptarmigan: {weight: 1, dawn: 1, day: 1, night: 0}
       black_grouse:     {weight: 1, dawn: 1, day: 0.5, night: 0}
