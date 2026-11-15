@@ -4,3 +4,4 @@ __pycache__/
 test_clips/
 events.csv
 *.ogg
+SUOKUULO_BRIEF*.md
