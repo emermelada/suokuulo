@@ -142,8 +142,8 @@ the combination for boreal peatland restoration:
 ## Power
 
 The UNO Q's Linux side cannot be put to sleep, so the board draws power around
-the clock. A field unit therefore runs on battery + solar panel. Measured
-draw: [X] W (TODO: measure at the board's USB-C input while listening). The
+the clock. A field unit therefore runs on battery + solar panel. The draw has
+not been measured yet (to do: at the board's USB-C input while listening). The
 next version adds an external power timer that switches the board on for the
 dawn and dusk chorus only, which is when most indicator birds call.
 
@@ -154,7 +154,7 @@ dawn and dusk chorus only, which is when most indicator birds call.
 | Arduino UNO Q, 2 GB variant | Linux (Qualcomm) + MCU (STM32) on one board; 1.70 GB usable RAM |
 | Arduino USB-C hub | stick-shaped, PD power input |
 | Official Arduino power supply | powers the hub and board (field: battery + solar) |
-| USB microphone | model: TODO |
+| USB microphone | generic USB mic on the hub (enumerates as "Camera", 48 kHz) |
 | Arduino Modulino Buzzer (ABX00108) | Qwiic cable to the board's Qwiic connector; startup beep |
 | LoRa module, SX1276/RFM95 (planned) | not fitted yet; payloads are printed on the MCU serial |
 

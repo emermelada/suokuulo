@@ -7,6 +7,44 @@ hourly summary goes out as a 16-byte LoRa payload from the MCU, which also
 watches that the analysis on the Linux side is alive. A local dashboard shows
 the detail to anyone on the same network. No audio leaves the device.
 
+Junction 2026, Arduino challenge "The Green European Renaissance". Story,
+results and design notes: [PROJECT_HUB.md](PROJECT_HUB.md).
+
+![Dashboard on the board, last 24 h](docs/dashboard.png)
+
+## What it does
+
+- **Listens and identifies on the board.** BirdNET v2.4 (TFLite) on the UNO Q's
+  Linux side, about 450 ms per 3 s window, 12 bog indicator species.
+- **Scores the bog, not just the birds.** A 0-100 soundscape health score
+  against what a healthy restored bog should sound like at this season and
+  time of day, learned per site after 3 days.
+- **Reports over LoRa in 16 bytes.** The MCU packs an hourly summary and
+  watches the Linux side: the office can tell "device dead" from "analysis
+  crashed" from "healthy but quiet".
+- **Works offline.** Dashboard served by the board (10 min / 1 h / 24 h /
+  30 days, works on a phone), append-only `events.csv`, no cloud, no audio
+  stored or sent.
+
+| MCU serial: watchdog and summary payloads, decoded | Dashboard on a phone |
+| --- | --- |
+| ![Uplink payloads](docs/uplink-serial.png) | <img src="docs/dashboard-phone.png" width="260" alt="Dashboard on a phone"> |
+
+## Quick start
+
+On a laptop, no model download, no audio, no keys:
+
+```sh
+python -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python run_laptop.py --mock          # scripted detections, health and uplink in the console
+.venv/bin/pytest -q                            # 37 tests
+```
+
+With BirdNET and real recordings (needs a free Xeno-canto key, see
+[Laptop setup](#laptop-setup)): `.venv/bin/python scripts/simulate.py --web`
+plays the demo playlist through the full pipeline and serves the dashboard on
+http://localhost:8000/. On the board: [Board setup](#board-setup-arduino-uno-q).
+
 ## Why now: EU legal framework
 
 - [Regulation (EU) 2024/1991](https://eur-lex.europa.eu/eli/reg/2024/1991/oj/eng)
@@ -54,6 +92,28 @@ SuoKuulo does not replace field surveys; it covers the sites and the days where 
   insects) against 1-2 kHz (engines, voices): -1 noise-dominated, +1
   nature-dominated. It needs no species, so it works all year. Shown on its
   own; it never changes health.
+
+## Dashboard
+
+Served by the board on port 7000 (`http://<board-ip>:7000/`), no internet
+needed.
+
+- **Soundscape health** with a window selector: 10 min, 1 h (default), 24 h,
+  30 days. Richness and activity are computed over the chosen window; the
+  expected activity adds up each hour covered at its own dawn/day/night (or
+  learned) rate, so a window that spans dawn expects more than one at night.
+  30 days shows one health point per day and the 30-day mean, or "Not enough
+  history yet (N days)" before day 3. The choice is remembered per browser;
+  `?window=10m` opens a window directly. The selector only changes the
+  dashboard: the LED matrix and the uplink keep `score_window_min`.
+- **Summary card**: expected species heard, detections, first and last
+  detection in the window, and detection-minutes per hour over the last 24 h.
+- **Indicator species**: expected-now species first, with season icons
+  (spring, summer, autumn, winter; the current season ringed; tap for the 12
+  months). Rows are normal when heard in the window, muted when heard today
+  but not in the window, grey when not heard.
+- **Acoustic index** and the latest events; footer with uptime, inference
+  time and RAM.
 
 ## Which brain does what
 
@@ -175,10 +235,7 @@ the Qwiic connector.
      48000 Hz`, a `[stats]` line each minute (inference ms, RAM);
    - on the MCU serial (App Lab, the app's Serial Monitor):
      `[uplink] no radio, payload 11...` lines, which `scripts/decode_payload.py` decodes;
-   - the dashboard on `http://<board-ip>:7000/`. Its selector (10 min / 1 h / 24 h /
-     30 days, default 1 h, remembered per browser) only changes the dashboard;
-     the matrix and the uplink keep `score_window_min`. `?window=10m` opens a
-     given window directly.
+   - the dashboard on `http://<board-ip>:7000/` (see [Dashboard](#dashboard)).
 
 To test the board without the mic, set `source: file` and `input: <folder of
 clips copied to the board>`.
@@ -195,6 +252,18 @@ beep, chirp, two chirps, a 2 s two-tone siren, 1.5 s of silence. The console
 prints `buzzer found` and each sound name. An X on the matrix means the buzzer
 was not found on `Wire1`: reseat the Qwiic cable.
 
+## Repository layout
+
+| Path | What |
+| --- | --- |
+| `suokuulo/` | core package: audio, BirdNET classifier, smoothing, scoring, event log, dashboard (no Arduino imports, runs on a laptop) |
+| `applab/` | the App Lab app: `python/main.py` (Bridge, WebUI), `sketch/` (MCU: matrix, buzzer, payload, watchdog), `buzzer_test/` |
+| `config/` | `species.yaml`, `baseline.yaml`, `board.yaml`, `demo.yaml`, `laptop.yaml` |
+| `scripts/` | evaluation, simulation, payload decoder, clip download |
+| `tests/` | pytest suite (`.venv/bin/pytest -q`) |
+| `eval/`, `eval_results.md` | evaluation outputs |
+| `docs/` | screenshots |
+
 ## Known limits
 
 - Evaluation (`eval_results.md`, laptop): 88 % of bird clips confirmed, median
@@ -204,8 +273,11 @@ was not found on `Wire1`: reseat the Qwiic cable.
   `verbose: true`.
 - `baseline.yaml` numbers are estimates until the device has learned its own.
 - No LoRa module is fitted: payloads are printed, not sent.
-- Power: the Linux side cannot sleep, so the board draws power all the time
-  (see PROJECT_HUB.md).
+- Power: the Linux side cannot sleep, so the board draws power all the time;
+  the draw has not been measured yet (see PROJECT_HUB.md).
+- Species months and expected activity are starting estimates from BirdLife
+  Suomi arrival data and expert advice, not survey data (`source` in
+  `config/species.yaml`).
 
 ## Future work: disturbance detection
 
